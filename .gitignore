@@ -1,0 +1,11 @@
+*.exe
+*.dll
+*/bin/*
+*/obj/*
+*/publish/*
+obj/*
+publish/*
+bin/*
+*.psess
+*.pfx
+!library/*

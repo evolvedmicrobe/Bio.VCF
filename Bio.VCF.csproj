@@ -64,7 +64,6 @@
     <Compile Include="VCF\CommonInfo.cs" />
     <Compile Include="VCF\FastGenotype.cs" />
     <Compile Include="VCF\GeneralUtils.cs" />
-    <Compile Include="VCF\IFeature.cs" />
     <Compile Include="VCF\Genotype.cs" />
     <Compile Include="VCF\GenotypeBuilder.cs" />
     <Compile Include="VCF\GenotypeLikelihoods.cs" />

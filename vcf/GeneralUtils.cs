@@ -188,9 +188,9 @@ namespace Bio.VCF
 		/// <param name="a"> the first double value </param>
 		/// <param name="b"> the second double value </param>
 		/// <returns> -1 if a is greater than b, 0 if a is equal to be within 1e-6, 1 if b is greater than a. </returns>
-		public static sbyte compareDoubles(double a, double b)
+		public static sbyte CompareDoubles(double a, double b)
 		{
-			return compareDoubles(a, b, 1e-6);
+			return CompareDoubles(a, b, 1e-6);
 		}
 
 		/// <summary>
@@ -200,7 +200,7 @@ namespace Bio.VCF
 		/// <param name="b">       the second double value </param>
 		/// <param name="epsilon"> the precision within which two double values will be considered equal </param>
 		/// <returns> -1 if a is greater than b, 0 if a is equal to be within epsilon, 1 if b is greater than a. </returns>
-		public static sbyte compareDoubles(double a, double b, double epsilon)
+		public static sbyte CompareDoubles(double a, double b, double epsilon)
 		{
 			if (Math.Abs(a - b) < epsilon)
 			{

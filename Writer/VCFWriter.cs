@@ -280,7 +280,7 @@ namespace Bio.VCF
                 lineToWrite.Append(VCFConstants.FIELD_SEPARATOR);
 
                 // QUAL
-                if (!vc.hasLog10PError())
+                if (!vc.HasLog10PError)
                 {
                     lineToWrite.Append(VCFConstants.MISSING_VALUE_v4);
                 }
@@ -423,7 +423,7 @@ namespace Bio.VCF
 
 				return String.Join(";", ParsingUtils.sortList(vc.Filters.ToList()).ToArray());
 			}
-			else if (vc.filtersWereApplied())
+			else if (vc.FiltersWereApplied)
 			{
 				return VCFConstants.PASSES_FILTERS_v4;
 			}

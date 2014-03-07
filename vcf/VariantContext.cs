@@ -662,22 +662,27 @@ namespace Bio.VCF
 				return commonInfo.NotFiltered;
 			}
 		}
-		public  bool filtersWereApplied()
+		public  bool FiltersWereApplied
 		{
-			return commonInfo.filtersWereApplied();
+            get
+            {
+                return commonInfo.filtersWereApplied();
+            }
 		}
-		public  bool hasLog10PError()
+		public  bool HasLog10PError
 		{
+            get{
 			return commonInfo.hasLog10PError();
+                }
 		}
-		public  double Log10PError
+		public double Log10PError
 		{
 			get
 			{
 				return commonInfo.Log10PError;
 			}
 		}
-		public  double PhredScaledQual
+		public double PhredScaledQual
 		{
 			get
 			{
@@ -1529,13 +1534,13 @@ namespace Bio.VCF
 
 		public override string ToString()
 		{
-			return string.Format("[VC {0} @ {1} Q{2} of type={3} alleles={4} attr={5} GT={6}", Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), hasLog10PError() ? string.Format("{0:F2}", PhredScaledQual) : ".", this.type, ParsingUtils.sortList(this.Alleles), ParsingUtils.sortedString(this.Attributes), this.Genotypes);
+			return string.Format("[VC {0} @ {1} Q{2} of type={3} alleles={4} attr={5} GT={6}", Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), HasLog10PError ? string.Format("{0:F2}", PhredScaledQual) : ".", this.type, ParsingUtils.sortList(this.Alleles), ParsingUtils.sortedString(this.Attributes), this.Genotypes);
 		}
 
 		public  string toStringWithoutGenotypes()
 		{
 			return string.Format("[VC {0} @ {1} Q{2} of type={3} alleles={4} attr={5}", 
-                Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), hasLog10PError() ? string.Format("{0:F2}", PhredScaledQual) : ".", 
+                Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), HasLog10PError ? string.Format("{0:F2}", PhredScaledQual) : ".", 
                 this.type, ParsingUtils.sortList(this.Alleles), ParsingUtils.sortedString(this.Attributes));
 		}
 
@@ -1758,12 +1763,7 @@ namespace Bio.VCF
             return g2.make();
 		}
 
-		// ---------------------------------------------------------------------------------------------------------
-		//
-		// tribble integration routines -- not for public consumption
-		//
-		// ---------------------------------------------------------------------------------------------------------
-		public  string Chr
+	    public  string Chr
 		{
 			get
 			{

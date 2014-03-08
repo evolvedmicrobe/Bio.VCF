@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bio.VCF", "Bio.VCF.csproj", "{F7213ADD-1C0C-434F-9A32-7F6C31671A89}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestVCF", "TestVCF\TestVCF.csproj", "{F52BBBBA-FC02-4D9B-AD55-C24C3E2D914B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestVCF", "..\TestVCF\TestVCF.csproj", "{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +27,12 @@ Global
 		{F52BBBBA-FC02-4D9B-AD55-C24C3E2D914B}.Mono|Any CPU.Build.0 = Release|Any CPU
 		{F52BBBBA-FC02-4D9B-AD55-C24C3E2D914B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F52BBBBA-FC02-4D9B-AD55-C24C3E2D914B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}.Mono|Any CPU.ActiveCfg = Release|Any CPU
+		{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}.Mono|Any CPU.Build.0 = Release|Any CPU
+		{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10FCBDF8-CAD3-4B00-BBF8-D39A6F45FD39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -632,24 +632,34 @@ namespace Bio.VCF
 		{
             get
             {
+<<<<<<< HEAD
                 return CommonInfo.filtersWereApplied();
+=======
+                return commonInfo.filtersWereApplied();
+>>>>>>> d1d02ba77a6e81801ddc16086eff6aa20c4059a5
             }
 		}
 		public  bool HasLog10PError
 		{
+<<<<<<< HEAD
             get
             {
                 return CommonInfo.hasLog10PError();
             }
+=======
+            get{
+			return commonInfo.hasLog10PError();
+                }
+>>>>>>> d1d02ba77a6e81801ddc16086eff6aa20c4059a5
 		}
-		public  double Log10PError
+		public double Log10PError
 		{
 			get
 			{
 				return CommonInfo.Log10PError;
 			}
 		}
-		public  double PhredScaledQual
+		public double PhredScaledQual
 		{
 			get
 			{
@@ -1478,7 +1488,35 @@ namespace Bio.VCF
 			IDictionary<string, object> map = fullyDecodeAttributes(g.ExtendedAttributes, header, true);
             var g2=new GenotypeBuilder(g);
             g2.AddAttributes(map);
+<<<<<<< HEAD
             return g2.Make();
+=======
+            return g2.make();
+		}
+
+	    public  string Chr
+		{
+			get
+			{
+				return contig;
+			}
+		}
+
+		public  int Start
+		{
+			get
+			{
+				return (int)start;
+			}
+		}
+
+		public  int End
+		{
+			get
+			{
+				return (int)stop;
+			}
+>>>>>>> d1d02ba77a6e81801ddc16086eff6aa20c4059a5
 		}
 
 		public  bool HasSymbolicAlleles()

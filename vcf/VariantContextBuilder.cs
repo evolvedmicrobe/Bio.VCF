@@ -351,15 +351,6 @@ namespace Bio.VCF
             set;
         }
 
-		/// <summary>
-		/// Tells us that the resulting VariantContext should not have an ID
-		/// @return
-		/// </summary>
-		public void SetNoID()
-		{
-			this.ID= VCFConstants.EMPTY_ID_FIELD;
-		}
-		
 
 		/// <summary>
 		/// Tells us that the resulting VariantContext should have the specified location </summary>

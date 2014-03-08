@@ -142,7 +142,7 @@ namespace Bio.VCF
 			return AsString;
 		}
 
-		public  string AsString
+		public string AsString
 		{
 			get
 			{

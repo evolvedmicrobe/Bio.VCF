@@ -127,19 +127,19 @@ namespace Bio.VCF
                 {
                     sawGoodGT = true;
                 }
-                if (g.hasGQ())
+                if (g.HasGQ)
                 {
                     sawGoodQual = true;
                 }
-                if (g.hasDP())
+                if (g.HasDP)
                 {
                     sawDP = true;
                 }
-                if (g.hasAD())
+                if (g.HasAD)
                 {
                     sawAD = true;
                 }
-                if (g.hasPL())
+                if (g.HasPL)
                 {
                     sawPL = true;
                 }
@@ -261,13 +261,13 @@ namespace Bio.VCF
                 // ALT
                 if (vc.Variant)
                 {
-                    Allele altAllele = vc.getAlternateAllele(0);
+                    Allele altAllele = vc.GetAlternateAllele(0);
                     string alt = altAllele.DisplayString;
                     lineToWrite.Append(alt);
 
                     for (int i = 1; i < vc.AlternateAlleles.Count; i++)
                     {
-                        altAllele = vc.getAlternateAllele(i);
+                        altAllele = vc.GetAlternateAllele(i);
                         alt = altAllele.DisplayString;
                         lineToWrite.Append(",");
                         lineToWrite.Append(alt);
@@ -280,7 +280,7 @@ namespace Bio.VCF
                 lineToWrite.Append(VCFConstants.FIELD_SEPARATOR);
 
                 // QUAL
-                if (!vc.hasLog10PError())
+                if (!vc.HasLog10PError)
                 {
                     lineToWrite.Append(VCFConstants.MISSING_VALUE_v4);
                 }
@@ -423,7 +423,7 @@ namespace Bio.VCF
 
 				return String.Join(";", ParsingUtils.sortList(vc.Filters.ToList()).ToArray());
 			}
-			else if (vc.filtersWereApplied())
+			else if (vc.FiltersWereApplied)
 			{
 				return VCFConstants.PASSES_FILTERS_v4;
 			}
@@ -437,6 +437,7 @@ namespace Bio.VCF
 
 		private string formatQualValue(double qual)
 		{
+            //TODO: Format is bad right now.
 			string s = String.Format(QUAL_FORMAT_STRING, qual);
 			if (s.EndsWith(QUAL_FORMAT_EXTENSION_TO_TRIM))
 			{
@@ -495,15 +496,15 @@ namespace Bio.VCF
 		private string getGenotypeDataText(VariantContext vc, IDictionary<Allele, string> alleleMap, IList<string> genotypeFormatKeys)
 		{
             StringBuilder sbn = new StringBuilder();
-			int ploidy = vc.getMaxPloidy(2);
+			int ploidy = vc.GetMaxPloidy(2);
 			foreach (string sample in mHeader.GenotypeSampleNames)
 			{
 				sbn.Append(VCFConstants.FIELD_SEPARATOR);
 
-				Genotype g = vc.getGenotype(sample);
+				Genotype g = vc.GetGenotype(sample);
 				if (g == null)
 				{
-					g = GenotypeBuilder.createMissing(sample, ploidy);
+					g = GenotypeBuilder.CreateMissing(sample, ploidy);
 				}
 				IList<string> attrs = new List<string>(genotypeFormatKeys.Count);
 				foreach (string field in genotypeFormatKeys)
@@ -559,7 +560,7 @@ namespace Bio.VCF
 							}
 							else
 							{
-								object val = g.hasExtendedAttribute(field) ? g.getExtendedAttribute(field) : VCFConstants.MISSING_VALUE_v4;
+								object val = g.HasExtendedAttribute(field) ? g.GetExtendedAttribute(field) : VCFConstants.MISSING_VALUE_v4;
 
 								VCFFormatHeaderLine metaData = mHeader.getFormatHeaderLine(field);
 								if (metaData != null)

@@ -80,7 +80,7 @@ namespace Bio.VCF
 				return attributes;
 			}
 
-			if (vc.hasGenotypes())
+			if (vc.HasGenotypes)
 			{
 				attributes[VCFConstants.ALLELE_NUMBER_KEY] = AN;
 
@@ -90,12 +90,12 @@ namespace Bio.VCF
 					List<double> alleleFreqs = new List<double>();
 					List<int> alleleCounts = new List<int>();
 					List<int> foundersAlleleCounts = new List<int>();
-					double totalFoundersChromosomes = (double)vc.getCalledChrCount(founderIds);
+					double totalFoundersChromosomes = (double)vc.GetCalledChrCount(founderIds);
 					int foundersAltChromosomes;
 					foreach (Allele allele in vc.AlternateAlleles)
 					{
-						foundersAltChromosomes = vc.getCalledChrCount(allele,founderIds);
-						alleleCounts.Add(vc.getCalledChrCount(allele));
+						foundersAltChromosomes = vc.GetCalledChrCount(allele,founderIds);
+						alleleCounts.Add(vc.GetCalledChrCount(allele));
 						foundersAlleleCounts.Add(foundersAltChromosomes);
 						if (AN == 0)
 						{
@@ -212,7 +212,7 @@ namespace Bio.VCF
 			{
 				throw new Exception("computeEndFromAlleles requires first allele to be reference");
 			}
-			if (VariantContext.hasSymbolicAlleles(alleles))
+			if (VariantContext.HasSymbolicAlleles(alleles))
 			{
 				if (endForSymbolicAlleles == -1)
 				{

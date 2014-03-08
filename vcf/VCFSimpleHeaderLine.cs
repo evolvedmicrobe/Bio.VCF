@@ -47,7 +47,7 @@ namespace Bio.VCF
 			initialize(name, mapping);
 		}
 
-		protected internal virtual void initialize(string name, IDictionary<string, string> genericFields)
+		protected internal void initialize(string name, IDictionary<string, string> genericFields)
 		{
 			if (name == null || genericFields == null || genericFields.Count == 0)
 			{

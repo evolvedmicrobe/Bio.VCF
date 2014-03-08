@@ -123,7 +123,7 @@ namespace Bio.VCF
 				case Bio.VCF.VCFHeaderLineCount.A:
 					return vc.NAlleles - 1;
 				case Bio.VCF.VCFHeaderLineCount.G:
-					int ploidy = vc.getMaxPloidy(2);
+					int ploidy = vc.GetMaxPloidy(2);
 					return GenotypeLikelihoods.numLikelihoods(vc.NAlleles, ploidy);
 				default:
 					throw new VCFParsingError("Unknown count type: " + countType);

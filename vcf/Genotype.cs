@@ -118,12 +118,16 @@ namespace Bio.VCF
 		public abstract IList<Allele> Alleles {get;}
 
 
-        /// <returns> the sequencing depth of this sample, or -1 if this value is missing </returns>
+        /// <summary>
+        ///  The sequencing depth of this sample, or -1 if this value is missing
+        /// </summary>
         public abstract int DP { get; }
 
-        /// <returns> the count of reads, one for each allele in the surrounding Variant context,
-        ///      matching the corresponding allele, or null if this value is missing.  MUST
-        ///      NOT BE MODIFIED! </returns>
+        /// <summary>
+        /// The count of reads, one for each allele in the surrounding Variant context,
+        ///  matching the corresponding allele, or null if this value is missing.  MUST
+        ///  NOT BE MODIFIED! 
+        /// </summary>
         public abstract int[] AD { get; }
         
         /// <summary>
@@ -178,7 +182,7 @@ namespace Bio.VCF
 		/// Returns the name associated with this sample.
 		/// </summary>
 		/// <returns> a non-null String </returns>
-		public virtual string SampleName
+		public string SampleName
 		{
 			get
 			{
@@ -195,33 +199,42 @@ namespace Bio.VCF
 		/// <summary>
 		/// Does the PL field have a value? </summary>
 		/// <returns> true if there's a PL field value </returns>
-		public virtual bool hasPL()
+		public bool HasPL
 		{
+            get
+            {
 			return PL != null;
+            }
 		}
 
 		/// <summary>
 		/// Does the AD field have a value? </summary>
 		/// <returns> true if there's a AD field value </returns>
-		public virtual bool hasAD()
+		public bool HasAD
 		{
-			return AD != null;
+            get {return AD!=null;}
 		}
 
 		/// <summary>
 		/// Does the GQ field have a value? </summary>
 		/// <returns> true if there's a GQ field value </returns>
-		public virtual bool hasGQ()
+		public bool HasGQ
 		{
+            get
+            {
 			return GQ != -1;
+            }
 		}
 
 		/// <summary>
 		/// Does the DP field have a value? </summary>
 		/// <returns> true if there's a DP field value </returns>
-		public virtual bool hasDP()
+		public bool HasDP
 		{
-			return DP != -1;
+            get{
+                return DP != -1;
+            }
+			
 		}
 
 		// ---------------------------------------------------------------------------------------------------------
@@ -553,7 +566,7 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="key"> a non-null string key to check for an association </param>
 		/// <returns> true if key has a value in the extendedAttributes </returns>
-		public virtual bool hasExtendedAttribute(string key)
+		public virtual bool HasExtendedAttribute(string key)
 		{
 			return ExtendedAttributes.ContainsKey(key);
 		}
@@ -566,7 +579,7 @@ namespace Bio.VCF
 		/// <returns> a value (potentially) null associated with key, or defaultValue if no association exists </returns>
 		public virtual object getExtendedAttribute(string key, object defaultValue)
 		{
-			return hasExtendedAttribute(key) ? ExtendedAttributes[key] : defaultValue;
+			return HasExtendedAttribute(key) ? ExtendedAttributes[key] : defaultValue;
 		}
 
 		/// <summary>
@@ -574,7 +587,7 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="key">
 		/// @return </param>
-		public virtual object getExtendedAttribute(string key)
+		public virtual object GetExtendedAttribute(string key)
 		{
 			return getExtendedAttribute(key, null);
 		}
@@ -614,7 +627,7 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="key">
 		/// @return </param>
-		public virtual object getAnyAttribute(string key)
+		public virtual object GetAnyAttribute(string key)
 		{
 			if (key.Equals(VCFConstants.GENOTYPE_KEY))
 			{
@@ -638,34 +651,34 @@ namespace Bio.VCF
 			}
 			else
 			{
-				return getExtendedAttribute(key);
+				return GetExtendedAttribute(key);
 			}
 		}
 		public virtual bool hasAnyAttribute(string key)
 		{
-			if (key.Equals(VCFConstants.GENOTYPE_KEY))
+			if (key==VCFConstants.GENOTYPE_KEY)
 			{
 				return Available;
 			}
-			else if (key.Equals(VCFConstants.GENOTYPE_QUALITY_KEY))
+			else if (key==VCFConstants.GENOTYPE_QUALITY_KEY)
 			{
-				return hasGQ();
+				return HasGQ;
 			}
-			else if (key.Equals(VCFConstants.GENOTYPE_ALLELE_DEPTHS))
+			else if (key==VCFConstants.GENOTYPE_ALLELE_DEPTHS)
 			{
-				return hasAD();
+				return HasAD;
 			}
-			else if (key.Equals(VCFConstants.GENOTYPE_PL_KEY))
+			else if (key==VCFConstants.GENOTYPE_PL_KEY)
 			{
-				return hasPL();
+				return HasPL;
 			}
-			else if (key.Equals(VCFConstants.DEPTH_KEY))
+			else if (key==VCFConstants.DEPTH_KEY)
 			{
-				return hasDP();
+				return HasDP;
 			}
 			else
 			{
-				return hasExtendedAttribute(key);
+				return HasExtendedAttribute(key);
 			}
 		}
 		// TODO -- add getAttributesAsX interface here
@@ -681,7 +694,7 @@ namespace Bio.VCF
         [Obsolete]
         public virtual bool hasLog10PError()
         {
-            return hasGQ();
+            return HasGQ;
         }
         [Obsolete]
         public virtual double Log10PError
@@ -702,7 +715,7 @@ namespace Bio.VCF
         [Obsolete]
         public virtual string getAttributeAsString(string key, string defaultValue)
         {
-            object x = getExtendedAttribute(key);
+            object x = GetExtendedAttribute(key);
             if (x == null)
             {
                 return defaultValue;
@@ -716,7 +729,7 @@ namespace Bio.VCF
         [Obsolete]
         public virtual int getAttributeAsInt(string key, int defaultValue)
         {
-            object x = getExtendedAttribute(key);
+            object x = GetExtendedAttribute(key);
             if (x == null || x == VCFConstants.MISSING_VALUE_v4)
             {
                 return defaultValue;
@@ -730,7 +743,7 @@ namespace Bio.VCF
         [Obsolete]
         public virtual double getAttributeAsDouble(string key, double defaultValue)
         {
-            object x = getExtendedAttribute(key);
+            object x = GetExtendedAttribute(key);
             if (x == null)
             {
                 return defaultValue;

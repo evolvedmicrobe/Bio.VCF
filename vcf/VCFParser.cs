@@ -37,7 +37,7 @@ namespace Bio.VCF
 			{
 				throw new System.ArgumentException("The file " + vcfFile.FullName + " did not have a VCF header");
 			}
-			this.Header = (VCFHeader) header;
+			this.Header = header;
 		}
         
         public VCFParser(string fileName) :this(new FileInfo(fileName))

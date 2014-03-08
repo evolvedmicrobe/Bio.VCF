@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using System.Collections.ObjectModel;
 
 namespace Bio.VCF
 {
@@ -20,8 +21,6 @@ namespace Bio.VCF
 	/// or with intervening sets to conveniently make similar Genotypes with
 	/// slight modifications.
 	/// 
-	/// @author Mark DePristo
-	/// @since 06/12
 	/// </summary>
 	public sealed class GenotypeBuilder
     {
@@ -29,6 +28,9 @@ namespace Bio.VCF
         private static readonly List<Allele> HAPLOID_NO_CALL = new List<Allele>(){Allele.NO_CALL};
 		private static readonly List<Allele> DIPLOID_NO_CALL = new List<Allele>(){Allele.NO_CALL, Allele.NO_CALL};
         private static readonly Dictionary<string, object> NO_ATTRIBUTES = new Dictionary<string, object>();
+        private static readonly ReadOnlyCollection<Allele> HAPLOID_NO_CALL_READONLY = HAPLOID_NO_CALL.AsReadOnly();
+        private static readonly ReadOnlyCollection<Allele> DIPLOID_NO_CALL_READONLY = DIPLOID_NO_CALL.AsReadOnly();
+        
         // -----------------------------------------------------------------
         //
         // Factory methods
@@ -36,19 +38,19 @@ namespace Bio.VCF
         // -----------------------------------------------------------------
         public static Genotype Create(string sampleName, List<Allele> alleles)
         {
-            return (new GenotypeBuilder(sampleName, alleles)).make();
+            return (new GenotypeBuilder(sampleName, alleles)).Make();
         }
         public static Genotype Create(string sampleName, List<Allele> alleles, Dictionary<string, object> attributes)
         {
             var gb = new GenotypeBuilder(sampleName, alleles);
             gb.AddAttributes(attributes);
-            return gb.make();
+            return gb.Make();
         }
         protected internal static Genotype Create(string sampleName, List<Allele> alleles, double[] gls)
         {
             var gb = new GenotypeBuilder(sampleName, alleles);
             gb.setPL(gls);
-            return gb.make();
+            return gb.Make();
         }
         /// <summary>
         /// Create a new Genotype object for a sample that's missing from the VC (i.e., in
@@ -56,23 +58,24 @@ namespace Bio.VCF
         /// </summary>
         /// <param name="sampleName"> the name of this sample </param>
         /// <returns> an initialized Genotype with sampleName that's a diploid ./. no call genotype </returns>
-        public static Genotype createMissing(string sampleName, int ploidy)
+        public static Genotype CreateMissing(string sampleName, int ploidy)
         {
-            GenotypeBuilder builder = new GenotypeBuilder(sampleName);
+             ReadOnlyCollection<Allele> als;
             switch (ploidy)
             {
                 case 1:
-                    builder.Alleles = HAPLOID_NO_CALL;
+                    als= HAPLOID_NO_CALL_READONLY;
                     break;
                 case 2:
-                    builder.Alleles = DIPLOID_NO_CALL;
+                    als= DIPLOID_NO_CALL_READONLY;
                     break;
                 default:
-                    builder.Alleles = Enumerable.Range(0, ploidy).Select(x => Allele.NO_CALL).ToList();
+                    als = Enumerable.Range(0, ploidy).Select(x => Allele.NO_CALL).ToList().AsReadOnly();
                     break;
             }
-            return builder.make();
-        }
+            Dictionary<string, object> ea = NO_ATTRIBUTES;
+            return new FastGenotype(sampleName, als, false,-1,-1,null,null,null, ea);
+	    }
         #endregion
 
         private Dictionary<string, object> extendedAttributes = null;
@@ -84,19 +87,22 @@ namespace Bio.VCF
 		/// Create a empty builder.  Both a sampleName and alleles must be provided
 		/// before trying to make a Genotype from this builder.
 		/// </summary>
-		public GenotypeBuilder()
+		public GenotypeBuilder(bool makeAlleleList=true)
 		{
             GQ = -1;
             DP = -1;
             AD = null;
             PL = null;
-            Alleles = new List<Allele>();
+            if (makeAlleleList)
+            {
+                Alleles = new List<Allele>();
+            }
 		}
 		/// <summary>
 		/// Create a builder using sampleName.  Alleles must be provided
 		/// before trying to make a Genotype from this builder. </summary>
 		/// <param name="sampleName"> </param>
-		public GenotypeBuilder(string sampleName) :this()
+		public GenotypeBuilder(string sampleName,bool makeAlleleList=true) :this(makeAlleleList)
 		{
 			SampleName=sampleName;
 		}
@@ -104,7 +110,7 @@ namespace Bio.VCF
 		/// Make a builder using sampleName and alleles for starting values </summary>
 		/// <param name="sampleName"> </param>
 		/// <param name="alleles"> </param>
-		public GenotypeBuilder(string sampleName, List<Allele> alleles):this()
+		public GenotypeBuilder(string sampleName, List<Allele> alleles):this(false)
 		{
 			SampleName=sampleName;
 			Alleles=alleles;
@@ -140,13 +146,13 @@ namespace Bio.VCF
 		/// function you must provide sampleName and alleles before trying to
 		/// make more Genotypes.
 		/// </summary>
-		public void reset(bool keepSampleName)
+		public void Reset(bool keepSampleName)
 		{
 			if (!keepSampleName)
 			{
 				SampleName = null;
 			}
-            alleles_Renamed = new List<Allele>(0);
+            pAlleles = null;//new List<Allele>(0);
 			Phased = false;
 			GQ = -1;
 			DP = -1;
@@ -163,13 +169,13 @@ namespace Bio.VCF
 		/// inline as they are not copied for efficiency reasons.
 		/// </summary>
 		/// <returns> a newly minted Genotype object with values provided from this builder </returns>
-		public Genotype make()
+		public Genotype Make()
 		{
 			Dictionary<string, object> ea;
             if (extendedAttributes == null)
             { ea = NO_ATTRIBUTES; }
             else {ea= extendedAttributes; }
-			return new FastGenotype(SampleName, alleles_Renamed, Phased, GQ, DP, AD, PL, filters_Renamed, ea);
+			return new FastGenotype(SampleName, pAlleles, Phased, GQ, DP, AD, PL, filters_Renamed, ea);
 		}
 		/// <summary>
 		/// Set this genotype's name </summary>
@@ -179,7 +185,7 @@ namespace Bio.VCF
 		{
             get;set;
 		}
-        private List<Allele> alleles_Renamed;
+        private List<Allele> pAlleles;
 		/// <summary>
 		/// Set this genotype's alleles </summary>
 		/// <param name="alleles">
@@ -188,15 +194,15 @@ namespace Bio.VCF
 		{
             get
             {
-                return this.alleles_Renamed;
+                if (pAlleles == null)
+                {
+                    this.pAlleles = new List<Allele>();
+                }    
+                return this.pAlleles;
             }
             set
-            {
-                if (value == null)
-                {
-                    this.alleles_Renamed = new List<Allele>();
-                }            
-                this.alleles_Renamed = value;
+            {                        
+                this.pAlleles = value;
             }           
 		}
 		/// <summary>
@@ -355,7 +361,7 @@ namespace Bio.VCF
 		/// <summary>
 		/// Tell's this builder that we have at most these number of attributes
 		/// </summary>
-		public void maxAttributes(int i)
+		public void MaxAttributes(int i)
 		{
 			initialAttributeMapSize = i;
 		}

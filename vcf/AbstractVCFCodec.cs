@@ -246,7 +246,7 @@ namespace Bio.VCF
 			{
                 //TODO: Possibly raise exception?  At least in one scenario, the VCF header has already been parsed before this is called
                 //seems like this should always be true based on statement below
-				return null;
+                throw new VCFParsingError("While decoding genotype lines came across a commented header line.  Problem is with line:\n " + line);
 			}
 			// our header cannot be null, we need the genotype sample names and counts
 			if (header == null)
@@ -262,13 +262,12 @@ namespace Bio.VCF
            // string[] parts=line.Split(VCFConstants.FIELD_SEPARATOR_CHAR_AS_ARRAY,parseSize,StringSplitOptions.None);
             string[] parts = FastStringUtils.Split(line, VCFConstants.FIELD_SEPARATOR_CHAR, parseSize, StringSplitOptions.None);
                 
-            //TODO: Original picard method for string spliting below, seems to have saved memory over a new allocation, will profile to see if this is a bottleneck,
-            //should be fast though
-			//int nParts = ParsingUtils.Split(line, parts, VCFConstants.FIELD_SEPARATOR_CHAR, true);
-
+            
             //ND - Modified this heavily, as it is imposssible for header to be null at this stage.
-			// if we have don't have a header, or we have a header with no genotyping data check that we have eight columns.  Otherwise check that we have nine (normal colummns + genotyping data)
-			if ((!header.hasGenotypingData() && parts.Length != NUM_STANDARD_FIELDS) || (header.hasGenotypingData() && parts.Length != (NUM_STANDARD_FIELDS + 1)))
+			// if we have don't have a header, or we have a header with no genotyping data check that we have eight columns.
+            // Otherwise check that we have nine (normal colummns + genotyping data)
+			if ((!header.hasGenotypingData() && parts.Length != NUM_STANDARD_FIELDS) ||
+                (header.hasGenotypingData() && parts.Length != (NUM_STANDARD_FIELDS + 1)))
 			{
 				throw new VCFParsingError("Line " + lineNo + ": there aren't enough columns for line " + line + " (we expected " + (header == null ? NUM_STANDARD_FIELDS : NUM_STANDARD_FIELDS + 1) + " tokens, and saw " + parts.Length + " )");
 			}
@@ -278,7 +277,7 @@ namespace Bio.VCF
 		/// Parses a line from a VCF File
 		/// </summary>
 		/// <param name="parts">An array of length >8 where the 9th element contains unsplit genotype data (if present)</param>
-		/// <param name="includeGenotypes">Whether or not to also parse the genotype data</param>
+		/// <param name="includeGenotypes"> Whether or not to also parse the genotype data </param>
 		/// <returns></returns>
 		private VariantContext parseVCFLine(string[] parts, bool includeGenotypes)
 		{
@@ -305,7 +304,7 @@ namespace Bio.VCF
 			}
 			else if (parts[2].Equals(VCFConstants.EMPTY_ID_FIELD))
 			{
-				builder.SetNoID();
+                builder.ID= VCFConstants.EMPTY_ID_FIELD;
 			}
 			else
 			{
@@ -321,6 +320,7 @@ namespace Bio.VCF
 			{	
                 builder.SetFilters(filters.Hash);
 			}
+
 			IDictionary<string, object> attrs = parseInfo(parts[7]);
 			builder.Attributes=attrs;
 
@@ -353,7 +353,7 @@ namespace Bio.VCF
                 // did we resort the sample names?  If so, we need to load the genotype data
 				if (!header.SamplesWereAlreadySorted)
 				{
-					lazy.decode();
+					lazy.Decode();
 				}
 				builder.SetGenotypes(lazy,false);
 			}
@@ -394,13 +394,6 @@ namespace Bio.VCF
 		protected internal string GetCachedString(string str)
 		{
             return String.Intern(str);
-            //string internedString = stringCache[str];
-            //if (internedString == null)
-            //{
-            //    internedString = new string(str);
-            //    stringCache[internedString] = internedString;
-            //}
-            //return internedString;
 		}
 		/// <summary>
 		/// parse out the info fields into a dictionary of key/values </summary>
@@ -659,7 +652,6 @@ namespace Bio.VCF
                     using(GZipStream stream=new GZipStream(new FileStream(potentialInput,FileMode.Open),CompressionMode.Decompress))
                    {
                         isCompressed=isVCFStream(stream,MAGIC_HEADER_LINE);
-                        stream.Close();                      
                     }
                     if(!isCompressed)
                     {
@@ -698,76 +690,78 @@ namespace Bio.VCF
         protected abstract IList<String> parseFilters(String filterString);
 
 		/// <summary>
-		/// create a genotype map
+		/// Create a genotype map
 		/// </summary>
 		/// <param name="str"> the string </param>
 		/// <param name="alleles"> the list of alleles </param>
 		/// <returns> a mapping of sample name to genotype object </returns>
-		public LazyGenotypesContext.LazyData createGenotypeMap(string str, IList<Allele> alleles, string chr, int pos)
-		{
-            
+		public LazyGenotypesContext.LazyData CreateGenotypeMap(string str, IList<Allele> alleles, string chr, int pos)
+		{            
             if (genotypeParts == null)
                 genotypeParts = new String[header.ColumnCount - NUM_STANDARD_FIELDS];
-            //int nParts= header.ColumnCount - NUM_STANDARD_FIELDS;            
-            //string[] genotypeParts= str.Split(VCFConstants.FIELD_SEPARATOR);
             try
             {
                 FastStringUtils.Split(str, VCFConstants.FIELD_SEPARATOR_CHAR, genotypeParts);
             }
             catch(Exception e)
-               // if (nParts != genotypeParts.Length)
-			{
+            {
                 throw new VCFParsingError("Could not parse genotypes, was expecting " + (genotypeParts.Length - 1).ToString() + " but found " + str.Split(VCFConstants.FIELD_SEPARATOR_CHAR).Length.ToString(), e);
-				//generateException("there are " + (nParts - 1) + " genotypes while the header requires that " + v " genotypes be present for all records at " + chr + ":" + pos, lineNo);
 			}
 			List<Genotype> genotypes = new List<Genotype>(genotypeParts.Length);
 			// get the format keys
 			//int nGTKeys = ParsingUtils.Split(genotypeParts[0], genotypeKeyArray, VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
-            string[] genotypeKeyArray = genotypeParts[0].Split(VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);			
+            string[] genotypeKeyArray = genotypeParts[0].Split(VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
+            int genotypeAlleleLocation = Array.IndexOf(genotypeKeyArray, VCFConstants.GENOTYPE_KEY);
+            if (version != VCFHeaderVersion.VCF4_1 && genotypeAlleleLocation == -1)
+            {
+                generateException("Unable to find the GT field for the record; the GT field is required in VCF4.0");
+            }
 			// clear out our allele mapping
 			alleleMap.Clear();
+            GenotypeBuilder gb = new GenotypeBuilder();
+                    
 			// cycle through the genotype strings
 			for (int genotypeOffset = 1; genotypeOffset < genotypeParts.Length; genotypeOffset++)
 			{
-				//int GTValueSplitSize = ParsingUtils.Split(genotypeParts[genotypeOffset], GTValueArray, VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
-                //string[] GTValueArray = genotypeParts[genotypeOffset].Split(VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
-                string[] GTValueArray = FastStringUtils.Split(genotypeParts[genotypeOffset], VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR, int.MaxValue, StringSplitOptions.None);
-                // cycle through the sample names
-				string sampleName = header.GenotypeSampleNames[genotypeOffset-1];
-				GenotypeBuilder gb = new GenotypeBuilder(sampleName);
-
-				// check to see if the value list is longer than the key list, which is a problem
-				if (genotypeKeyArray.Length < GTValueArray.Length)
-				{
-                    generateException("There are too many keys for the sample " + sampleName + ", line is: keys = " + genotypeParts[0] + ", values = " + genotypeParts[genotypeOffset]);
-				}
-
-                
-                //TODO THIS IS A DAMNED MESS
-                int genotypeAlleleLocation = -1;
-                ////if it's all missing data skip this
-                //if (GTValueArray.Length == 1 && GTFieldAllMissingData(GTValueArray[0]))
-                //{ }
-                //else
-                //{
-                    if (genotypeKeyArray.Length >= 1)
+                Genotype curGenotype;
+                string sampleName = header.GenotypeSampleNames[genotypeOffset - 1];
+                var currentGeno = genotypeParts[genotypeOffset];
+                //shortcut for null alleles
+                if (currentGeno == "./.")
+                {
+                    curGenotype = GenotypeBuilder.CreateMissing(sampleName, 2);
+                }
+                else if (currentGeno == ".")
+                {
+                    curGenotype = GenotypeBuilder.CreateMissing(sampleName, 1);
+                }
+                else
+                {
+                    gb.Reset(false);
+                    gb.SampleName = sampleName;
+                    string[] GTValueArray = FastStringUtils.Split(currentGeno, VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR, int.MaxValue, StringSplitOptions.None);
+                    // cycle through the sample names
+                    // check to see if the value list is longer than the key list, which is a problem
+                    if (genotypeKeyArray.Length < GTValueArray.Length)
                     {
-                        gb.maxAttributes(genotypeKeyArray.Length - 1);
+                        generateException("There are too many keys for the sample " + sampleName + ", line is: keys = " + genotypeParts[0] + ", values = " + genotypeParts[genotypeOffset]);
+                    }
+                    if (genotypeAlleleLocation > 0)
+                    {
+                        generateException("Saw GT field at position " + genotypeAlleleLocation + ", but it must be at the first position for genotypes when present");
+                    }
 
+                    //TODO: THIS IS A DAMNED MESS
+                    //Code loops over all fields in the key and decodes them, adding them as information to the genotype builder, which then makes it.
+                    if (genotypeKeyArray.Length > 0)
+                    {
+                        gb.MaxAttributes(genotypeKeyArray.Length - 1);
                         for (int i = 0; i < genotypeKeyArray.Length; i++)
                         {
                             string gtKey = genotypeKeyArray[i];
-                            bool missing = i >= GTValueArray.Length;
+                            if (i >= GTValueArray.Length) { break; }
                             // todo -- all of these on the fly parsing of the missing value should be static constants
-                            if (gtKey.Equals(VCFConstants.GENOTYPE_KEY))
-                            {
-                                genotypeAlleleLocation = i;
-                            }
-                            else if (missing)
-                            {
-                                // if its truly missing (there no provided value) skip adding it to the attributes
-                            }
-                            else if (gtKey.Equals(VCFConstants.GENOTYPE_FILTER_KEY))
+                            if (gtKey == VCFConstants.GENOTYPE_FILTER_KEY)
                             {
                                 IList<string> filters = parseFilters(GetCachedString(GTValueArray[i]));
                                 if (filters != null)
@@ -775,15 +769,15 @@ namespace Bio.VCF
                                     gb.SetFilters(filters.ToList());
                                 }
                             }
-                            else if (GTValueArray[i].Equals(VCFConstants.MISSING_VALUE_v4))
+                            else if (GTValueArray[i] == VCFConstants.MISSING_VALUE_v4)
                             {
                                 // don't add missing values to the map
                             }
                             else
                             {
-                                if (gtKey.Equals(VCFConstants.GENOTYPE_QUALITY_KEY))
+                                if (gtKey == VCFConstants.GENOTYPE_QUALITY_KEY)
                                 {
-                                    if (GTValueArray[i].Equals(VCFConstants.MISSING_GENOTYPE_QUALITY_v3))
+                                    if (GTValueArray[i] == VCFConstants.MISSING_GENOTYPE_QUALITY_v3)
                                     {
                                         gb.noGQ();
                                     }
@@ -792,15 +786,15 @@ namespace Bio.VCF
                                         gb.GQ = ((int)Math.Round(Convert.ToDouble(GTValueArray[i])));
                                     }
                                 }
-                                else if (gtKey.Equals(VCFConstants.GENOTYPE_ALLELE_DEPTHS))
+                                else if (gtKey == VCFConstants.GENOTYPE_ALLELE_DEPTHS)
                                 {
                                     gb.AD = (decodeInts(GTValueArray[i]));
                                 }
-                                else if (gtKey.Equals(VCFConstants.GENOTYPE_PL_KEY))
+                                else if (gtKey == VCFConstants.GENOTYPE_PL_KEY)
                                 {
                                     gb.PL = (decodeInts(GTValueArray[i]));
                                 }
-                                else if (gtKey.Equals(VCFConstants.GENOTYPE_LIKELIHOODS_KEY))
+                                else if (gtKey == VCFConstants.GENOTYPE_LIKELIHOODS_KEY)
                                 {
                                     gb.PL = (GenotypeLikelihoods.fromGLField(GTValueArray[i]).AsPLs);
                                 }
@@ -815,39 +809,28 @@ namespace Bio.VCF
                             }
                         }
                     }
-                //}
 
-				// check to make sure we found a genotype field if our version is less than 4.1 file
-				if (version != VCFHeaderVersion.VCF4_1 && genotypeAlleleLocation == -1)
-				{
-					generateException("Unable to find the GT field for the record; the GT field is required in VCF4.0");
-				}
-				if (genotypeAlleleLocation > 0)
-				{
-					generateException("Saw GT field at position " + genotypeAlleleLocation + ", but it must be at the first position for genotypes when present");
-				}
-                
+                    List<Allele> GTalleles;
+                    if (genotypeAlleleLocation == -1)
+                    {
+                        GTalleles = new List<Allele>(0);
+                    }
+                    else { GTalleles = parseGenotypeAlleles(GTValueArray[genotypeAlleleLocation], alleles, alleleMap); }
+                    gb.Alleles = GTalleles;
+                    gb.Phased = genotypeAlleleLocation != -1 && GTValueArray[genotypeAlleleLocation].IndexOf(VCFConstants.PHASED_AS_CHAR) != -1;
 
-				List<Allele> GTalleles;
-                if (genotypeAlleleLocation == -1)
-                {
-                    GTalleles = new List<Allele>(0);
+                    // add it to the list
+                    try
+                    {
+                        curGenotype= gb.Make();
+                    }
+                    catch (Exception e)
+                    {
+                        throw new VCFParsingError(e.Message + ", at position " + chr + ":" + pos);
+                    }
                 }
-                else { GTalleles = parseGenotypeAlleles(GTValueArray[genotypeAlleleLocation], alleles, alleleMap); }
-				gb.Alleles=GTalleles;
-				gb.Phased=genotypeAlleleLocation != -1 && GTValueArray[genotypeAlleleLocation].IndexOf(VCFConstants.PHASED_AS_CHAR) != -1;
-
-				// add it to the list
-				try
-				{
-					genotypes.Add(gb.make());
-				}
-				catch (Exception e)
-				{
-					throw new VCFParsingError(e.Message + ", at position " + chr + ":" + pos);
-				}
+                genotypes.Add(curGenotype);
 			}
-
 			return new LazyGenotypesContext.LazyData(genotypes, header.SampleNamesInOrder, header.SampleNameToOffset);
 		}
 

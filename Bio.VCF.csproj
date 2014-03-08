@@ -52,6 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="VCF\VariantContextAccessMethods.cs" />
     <Compile Include="Writer\IntGenotypeFieldAccessors.cs" />
     <Compile Include="Writer\Options.cs" />
     <Compile Include="Writer\VCFWriter.cs" />

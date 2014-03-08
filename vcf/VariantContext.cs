@@ -176,6 +176,8 @@ namespace Bio.VCF
     /// contains the statics for this class, while VariantContextGetters.cs contains a lot of get methods that 
     /// do not seem useful in C# and may be removed in a future version
 	/// </summary>
+    /// 
+    [DebuggerDisplay("{contig}:{start}")]
 	public partial class VariantContext
     {
         
@@ -184,22 +186,37 @@ namespace Bio.VCF
 		protected internal readonly string contig;
 		protected internal readonly long start;
 		protected internal readonly long stop;
-		private readonly string ID_Renamed;
-        public string ID
+        public string Chr
         {
             get
             {
-                return ID_Renamed;
+                return contig;
             }
         }
-        private bool fullyDecoded = false;
-        protected internal CommonInfo commonInfo = null;
-        public CommonInfo CommonInfo
+
+        public int Start
         {
             get
             {
-                return commonInfo;
+                return (int)start;
             }
+        }
+
+        public int End
+        {
+            get
+            {
+                return (int)stop;
+            }
+        }
+        public string ID
+        {
+            get;
+            private set;
+        }
+        public CommonInfo CommonInfo
+        {
+            get; protected internal set;
         }
 
 		/// <summary>
@@ -240,22 +257,19 @@ namespace Bio.VCF
 		/* cached monomorphic value: null -> not yet computed, False, True */
 		private bool? monomorphic = null;
 
-		// ---------------------------------------------------------------------------------------------------------
-		//
-		// constructors: see VariantContextBuilder
-		//
-		// ---------------------------------------------------------------------------------------------------------
-
+	
 		/// <summary>
 		/// Copy constructor
+        /// constructors: see VariantContextBuilder
 		/// </summary>
 		/// <param name="other"> the VariantContext to copy </param>
-		protected internal VariantContext(VariantContext other) : this(other.Source, other.ID, other.Chr, other.Start, other.End, other.Alleles, other.Genotypes, other.Log10PError, other.FiltersMaybeNull, other.Attributes, other.fullyDecoded, NO_VALIDATION)
+		protected internal VariantContext(VariantContext other) : this(other.Source, other.ID, other.Chr, other.Start, other.End, other.Alleles, other.Genotypes, other.Log10PError, other.FiltersMaybeNull, other.Attributes, other.FullyDecoded, NO_VALIDATION)
 		{
 		}
 
 		/// <summary>
 		/// the actual constructor.  Private access only
+        /// constructors: see VariantContextBuilder
 		/// </summary>
 		/// <param name="source">          source </param>
 		/// <param name="contig">          the contig </param>
@@ -282,9 +296,9 @@ namespace Bio.VCF
 			{
 				throw new System.ArgumentException("ID field cannot be the null or the empty string");
 			}
-			this.ID_Renamed = ID.Equals(VCFConstants.EMPTY_ID_FIELD) ? VCFConstants.EMPTY_ID_FIELD : ID;
+			this.ID = ID.Equals(VCFConstants.EMPTY_ID_FIELD) ? VCFConstants.EMPTY_ID_FIELD : ID;
 
-			this.commonInfo = new CommonInfo(source, log10PError, filters, attributes);
+			this.CommonInfo = new CommonInfo(source, log10PError, filters, attributes);
 
 			if (alleles == null)
 			{
@@ -318,7 +332,7 @@ namespace Bio.VCF
 				}
 			}
 
-			this.fullyDecoded = fullyDecoded;
+			this.FullyDecoded= fullyDecoded;
             validate(validationToPerform);
 		}
 
@@ -328,58 +342,7 @@ namespace Bio.VCF
 		//
 		// ---------------------------------------------------------------------------------------------------------
 
-		/// <summary>
-		/// This method subsets down to a set of samples.
-		/// 
-		/// At the same time returns the alleles to just those in use by the samples,
-		/// if rederiveAllelesFromGenotypes is true, otherwise the full set of alleles
-		/// in this VC is returned as the set of alleles in the subContext, even if
-		/// some of those alleles aren't in the samples
-		/// 
-		/// WARNING: BE CAREFUL WITH rederiveAllelesFromGenotypes UNLESS YOU KNOW WHAT YOU ARE DOING
-		/// </summary>
-		/// <param name="sampleNames">    the sample names </param>
-		/// <param name="rederiveAllelesFromGenotypes"> if true, returns the alleles to just those in use by the samples, true should be default </param>
-		/// <returns> new VariantContext subsetting to just the given samples </returns>
-		public VariantContext subContextFromSamples(ISet<string> sampleNames, bool rederiveAllelesFromGenotypes)
-		{
-			if (sampleNames.SetEquals(SampleNames) && !rederiveAllelesFromGenotypes)
-			{
-				return this; // fast path when you don't have any work to do
-			}
-			else
-			{
-				VariantContextBuilder builder = new VariantContextBuilder(this);
-				GenotypesContext newGenotypes = genotypes.subsetToSamples(sampleNames);
-				if (rederiveAllelesFromGenotypes)
-				{
-					builder.SetAlleles(allelesOfGenotypes(newGenotypes));
-				}
-				else
-				{
-					builder.SetAlleles(alleles);
-				}
-
-                builder.SetGenotypes(newGenotypes);
-                return builder.make();
-			}
-		}
-
-		/// <seealso cref= #subContextFromSamples(java.util.Set, boolean) with rederiveAllelesFromGenotypes = true
-		/// </seealso>
-		/// <param name="sampleNames">
-		/// @return </param>
-		public  VariantContext subContextFromSamples(ISet<string> sampleNames)
-		{
-			return subContextFromSamples(sampleNames, true);
-		}
-		public  VariantContext subContextFromSample(string sampleName)
-		{
-            var singleton = new HashSet<string>();
-            singleton.Add(sampleName);
-			return subContextFromSamples(singleton);
-		}
-		/// <summary>
+			/// <summary>
 		/// helper routine for subcontext </summary>
 		/// <param name="genotypes"> genotypes </param>
 		/// <returns> allele set </returns>
@@ -551,7 +514,7 @@ namespace Bio.VCF
 			get
 			{
 				// can't just call !isSimpleInsertion() because of complex indels
-				return Type == VariantType.INDEL && Biallelic && getAlternateAllele(0).Length == 1;
+				return Type == VariantType.INDEL && Biallelic && GetAlternateAllele(0).Length == 1;
 			}
 		}
 		/// <returns> true if the alleles indicate neither a simple deletion nor a simple insertion </returns>
@@ -617,9 +580,12 @@ namespace Bio.VCF
 		//
 		// ---------------------------------------------------------------------------------------------------------
 
-		public bool hasID()
+		public bool HasID
 		{
-			return ID != VCFConstants.EMPTY_ID_FIELD;
+            get
+            {
+                return ID != VCFConstants.EMPTY_ID_FIELD;
+            }
 		}
 
 		// ---------------------------------------------------------------------------------------------------------
@@ -631,57 +597,63 @@ namespace Bio.VCF
 		{
 			get
 			{
-				return commonInfo.Name;
+				return CommonInfo.Name;
 			}
 		}
 		public  ISet<string> FiltersMaybeNull
 		{
 			get
 			{
-				return commonInfo.FiltersMaybeNull;
+				return CommonInfo.FiltersMaybeNull;
 			}
 		}
 		public  ISet<string> Filters
 		{
 			get
 			{
-				return commonInfo.Filters;
+				return CommonInfo.Filters;
 			}
 		}
 		public  bool Filtered
 		{
 			get
 			{
-				return commonInfo.Filtered;
+				return CommonInfo.Filtered;
 			}
 		}
 		public  bool NotFiltered
 		{
 			get
 			{
-				return commonInfo.NotFiltered;
+				return CommonInfo.NotFiltered;
 			}
 		}
-		public  bool filtersWereApplied()
+		public  bool FiltersWereApplied
 		{
-			return commonInfo.filtersWereApplied();
+            get
+            {
+                return CommonInfo.filtersWereApplied();
+            }
 		}
-		public  bool hasLog10PError()
+		public  bool HasLog10PError
 		{
-			return commonInfo.hasLog10PError();
+            get
+            {
+                return CommonInfo.hasLog10PError();
+            }
 		}
 		public  double Log10PError
 		{
 			get
 			{
-				return commonInfo.Log10PError;
+				return CommonInfo.Log10PError;
 			}
 		}
 		public  double PhredScaledQual
 		{
 			get
 			{
-				return commonInfo.PhredScaledQual;
+				return CommonInfo.PhredScaledQual;
 			}
 		}
         //TODO: Consider making string/string type
@@ -689,38 +661,38 @@ namespace Bio.VCF
 		{
 			get
 			{
-				return commonInfo.Attributes;
+				return CommonInfo.Attributes;
 			}
 		}
-		public bool hasAttribute(string key)
+		public bool HasAttribute(string key)
 		{
-			return commonInfo.hasAttribute(key);
+			return CommonInfo.hasAttribute(key);
 		}
-		public  object getAttribute(string key)
+		public  object GetAttribute(string key)
 		{
-			return commonInfo.getAttribute(key);
-		}
-
-		public  object getAttribute(string key, object defaultValue)
-		{
-			return commonInfo.getAttribute(key, defaultValue);
+			return CommonInfo.getAttribute(key);
 		}
 
-		public  string getAttributeAsString(string key, string defaultValue)
+		public  object GetAttribute(string key, object defaultValue)
 		{
-			return commonInfo.getAttributeAsString(key, defaultValue);
+			return CommonInfo.getAttribute(key, defaultValue);
 		}
-		public  int getAttributeAsInt(string key, int defaultValue)
+
+		public  string GetAttributeAsString(string key, string defaultValue)
 		{
-			return commonInfo.getAttributeAsInt(key, defaultValue);
+			return CommonInfo.getAttributeAsString(key, defaultValue);
 		}
-		public  double getAttributeAsDouble(string key, double defaultValue)
+		public  int GetAttributeAsInt(string key, int defaultValue)
 		{
-			return commonInfo.getAttributeAsDouble(key, defaultValue);
+			return CommonInfo.getAttributeAsInt(key, defaultValue);
 		}
-		public  bool getAttributeAsBoolean(string key, bool defaultValue)
+		public  double GetAttributeAsDouble(string key, double defaultValue)
 		{
-			return commonInfo.getAttributeAsBoolean(key, defaultValue);
+			return CommonInfo.getAttributeAsDouble(key, defaultValue);
+		}
+		public  bool GetAttributeAsBoolean(string key, bool defaultValue)
+		{
+			return CommonInfo.getAttributeAsBoolean(key, defaultValue);
 		}
 
 		
@@ -731,7 +703,7 @@ namespace Bio.VCF
 		// ---------------------------------------------------------------------------------------------------------
 
 		/// <returns> the reference allele for this context </returns>
-		public  Allele Reference
+		public Allele Reference
 		{
 			get
 			{
@@ -768,39 +740,39 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="defaultPloidy"> the default ploidy, if all samples are no-called </param>
 		/// <returns> default, or the max ploidy </returns>
-		public  int getMaxPloidy(int defaultPloidy)
+		public  int GetMaxPloidy(int defaultPloidy)
 		{
 			return genotypes.getMaxPloidy(defaultPloidy);
 		}
 
 		/// <returns> The allele sharing the same bases as this String.  A convenience method; better to use byte[] </returns>
-		public  Allele getAllele(string allele)
+		public  Allele GetAllele(string allele)
 		{
-			return getAllele(VCFUtils.StringToSBytes(allele));
+			return GetAllele(VCFUtils.StringToSBytes(allele));
 		}
 
 		/// <returns> The allele sharing the same bases as this byte[], or null if no such allele is present. </returns>
-		public  Allele getAllele(sbyte[] allele)
+		public  Allele GetAllele(sbyte[] allele)
 		{
 			return Allele.getMatchingAllele(Alleles, allele);
 		}
 
 		/// <returns> True if this context contains Allele allele, or false otherwise </returns>
-		public  bool hasAllele(Allele allele)
+		public  bool HasAllele(Allele allele)
 		{
 			return hasAllele(allele, false, true);
 		}
-		public  bool hasAllele(Allele allele, bool ignoreRefState)
+		public  bool HasAllele(Allele allele, bool ignoreRefState)
 		{
 			return hasAllele(allele, ignoreRefState, true);
 		}
 
-		public  bool hasAlternateAllele(Allele allele)
+		public  bool HasAlternateAllele(Allele allele)
 		{
 			return hasAllele(allele, false, false);
 		}
 
-		public  bool hasAlternateAllele(Allele allele, bool ignoreRefState)
+		public  bool HasAlternateAllele(Allele allele, bool ignoreRefState)
 		{
 			return hasAllele(allele, ignoreRefState, false);
 		}
@@ -868,7 +840,7 @@ namespace Bio.VCF
 		/// <param name="i"> -- the ith allele (from 0 to n - 2 for a context with n alleles including a reference allele) </param>
 		/// <returns> the ith non-reference allele in this context </returns>
 		/// <exception cref="IllegalArgumentException"> if i is invalid </exception>
-		public  Allele getAlternateAllele(int i)
+		public  Allele GetAlternateAllele(int i)
 		{
 			return alleles[i + 1];
 		}
@@ -876,15 +848,15 @@ namespace Bio.VCF
 		/// <param name="other">  VariantContext whose alleles to compare against </param>
 		/// <returns> true if this VariantContext has the same alleles (both ref and alts) as other,
 		///         regardless of ordering. Otherwise returns false. </returns>
-		public  bool hasSameAllelesAs(VariantContext other)
+		public  bool HasSameAllelesAs(VariantContext other)
 		{
-			return hasSameAlternateAllelesAs(other) && other.Reference.Equals(Reference, false);
+			return HasSameAlternateAllelesAs(other) && other.Reference.Equals(Reference, false);
 		}
 
 		/// <param name="other">  VariantContext whose alternate alleles to compare against </param>
 		/// <returns> true if this VariantContext has the same alternate alleles as other,
 		///         regardless of ordering. Otherwise returns false. </returns>
-		public  bool hasSameAlternateAllelesAs(VariantContext other)
+		public  bool HasSameAlternateAllelesAs(VariantContext other)
 		{
 			IList<Allele> thisAlternateAlleles = AlternateAlleles;
 			IList<Allele> otherAlternateAlleles = other.AlternateAlleles;
@@ -921,12 +893,15 @@ namespace Bio.VCF
 		}
 
 		/// <returns> true if the context has associated genotypes </returns>
-		public  bool hasGenotypes()
+		public  bool HasGenotypes
 		{
-			return genotypes.Count > 0;
+            get
+            {
+                return genotypes.Count > 0;
+            }
 		}
 
-		public  bool hasGenotypes(ICollection<string> sampleNames)
+		public  bool HasGenotypesForSampleNames(ICollection<string> sampleNames)
 		{
 			return genotypes.ContainsSamples(sampleNames);
 		}
@@ -948,7 +923,7 @@ namespace Bio.VCF
 		/// <param name="sampleName">   the sample name </param>
 		/// <returns> mapping from sample name to genotype </returns>
 		/// <exception cref="IllegalArgumentException"> if sampleName isn't bound to a genotype </exception>
-		public  GenotypesContext getGenotypes(string sampleName)
+		public  GenotypesContext GetGenotypes(string sampleName)
 		{
 			return getGenotypes(new List<string>(){sampleName});
 		}
@@ -967,7 +942,7 @@ namespace Bio.VCF
 			return Genotypes.subsetToSamples(new HashSet<string>(sampleNames));
 		}
 
-		public  GenotypesContext getGenotypes(ISet<string> sampleNames)
+		public  GenotypesContext GetGenotypes(ISet<string> sampleNames)
 		{
 			return Genotypes.subsetToSamples(sampleNames);
 		}
@@ -993,17 +968,17 @@ namespace Bio.VCF
 		/// <param name="sample">  the sample name
 		/// </param>
 		/// <returns> the Genotype associated with the given sample in this context or null if the sample is not in this context </returns>
-		public  Genotype getGenotype(string sample)
+		public  Genotype GetGenotype(string sample)
 		{
 			return Genotypes[sample];
 		}
 
-		public  bool hasGenotype(string sample)
+		public  bool HasGenotype(string sample)
 		{
 			return Genotypes.ContainsSample(sample);
 		}
 
-		public  Genotype getGenotype(int ith)
+		public  Genotype GetGenotype(int ith)
 		{
 			return genotypes[ith];
 		}
@@ -1018,7 +993,7 @@ namespace Bio.VCF
 			get
 			{
 				ISet<string> noSamples = new HashSet<string>();
-				return getCalledChrCount(noSamples);
+				return GetCalledChrCount(noSamples);
 			}
 		}
 
@@ -1027,10 +1002,10 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="sampleIds"> IDs of samples to take into account. If empty then all samples are included. </param>
 		/// <returns> chromosome count </returns>
-		public  int getCalledChrCount(ISet<string> sampleIds)
+		public  int GetCalledChrCount(ISet<string> sampleIds)
 		{
 			int n = 0;
-			GenotypesContext genotypes = sampleIds.Count==0? Genotypes : getGenotypes(sampleIds);
+			GenotypesContext genotypes = sampleIds.Count==0? Genotypes : GetGenotypes(sampleIds);
 
 			foreach (Genotype g in genotypes)
 			{
@@ -1047,9 +1022,9 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="a"> allele </param>
 		/// <returns> chromosome count </returns>
-		public  int getCalledChrCount(Allele a)
+		public  int GetCalledChrCount(Allele a)
 		{
-			return getCalledChrCount(a,new HashSet<string>());
+			return GetCalledChrCount(a,new HashSet<string>());
 		}
 
 		/// <summary>
@@ -1058,16 +1033,14 @@ namespace Bio.VCF
 		/// <param name="a"> allele </param>
 		/// <param name="sampleIds"> - IDs of samples to take into account. If empty then all samples are included. </param>
 		/// <returns> chromosome count </returns>
-		public  int getCalledChrCount(Allele a, ISet<string> sampleIds)
+		public int GetCalledChrCount(Allele a, ISet<string> sampleIds)
 		{
 			int n = 0;
-			GenotypesContext genotypes = sampleIds.Count==0 ? Genotypes : getGenotypes(sampleIds);
-
-			foreach (Genotype g in genotypes)
+			GenotypesContext genotypes = sampleIds.Count==0 ? Genotypes : GetGenotypes(sampleIds);
+            foreach (Genotype g in genotypes)
 			{
 				n += g.countAllele(a);
 			}
-
 			return n;
 		}
 
@@ -1076,13 +1049,13 @@ namespace Bio.VCF
 		/// site?  That is, is the number of alternate alleles among all fo the genotype == 0?
 		/// </summary>
 		/// <returns> true if it's monomorphic </returns>
-		public  bool MonomorphicInSamples
+		public bool MonomorphicInSamples
 		{
 			get
 			{
 				if (!monomorphic.HasValue)
 				{
-					monomorphic = !Variant || (hasGenotypes() && getCalledChrCount(Reference) == CalledChrCount);
+					monomorphic = !Variant || (HasGenotypes && GetCalledChrCount(Reference) == CalledChrCount);
 				}
 				return monomorphic.Value;
 			}
@@ -1093,7 +1066,7 @@ namespace Bio.VCF
 		/// site?  That is, is the number of alternate alleles among all fo the genotype > 0?
 		/// </summary>
 		/// <returns> true if it's polymorphic </returns>
-		public  bool PolymorphicInSamples
+		public bool PolymorphicInSamples
 		{
 			get
 			{
@@ -1115,10 +1088,15 @@ namespace Bio.VCF
 		/// Genotype-specific functions -- how many no-calls are there in the genotypes?
 		/// </summary>
 		/// <returns> number of no calls </returns>
-		public  int NoCallCount
+		public int NoCallCount
 		{
 			get
 			{
+                if (Genotypes is LazyGenotypesContext && genotypeCounts == null && !((Genotypes as LazyGenotypesContext).ParsedAlready))
+                {
+                    var lz = Genotypes as LazyGenotypesContext;
+                    return lz.FastNoCallCount;
+                }
 				calculateGenotypeCounts();
 				return genotypeCounts[(int)GenotypeType.NO_CALL];
 			}
@@ -1128,7 +1106,7 @@ namespace Bio.VCF
 		/// Genotype-specific functions -- how many hom ref calls are there in the genotypes?
 		/// </summary>
 		/// <returns> number of hom ref calls </returns>
-		public  int HomRefCount
+		public int HomRefCount
 		{
 			get
 			{
@@ -1141,7 +1119,7 @@ namespace Bio.VCF
 		/// Genotype-specific functions -- how many het calls are there in the genotypes?
 		/// </summary>
 		/// <returns> number of het calls </returns>
-		public  int HetCount
+		public int HetCount
 		{
 			get
 			{
@@ -1154,7 +1132,7 @@ namespace Bio.VCF
 		/// Genotype-specific functions -- how many hom var calls are there in the genotypes?
 		/// </summary>
 		/// <returns> number of hom var calls </returns>
-		public  int HomVarCount
+		public int HomVarCount
 		{
 			get
 			{
@@ -1167,7 +1145,7 @@ namespace Bio.VCF
 		/// Genotype-specific functions -- how many mixed calls are there in the genotypes?
 		/// </summary>
 		/// <returns> number of mixed calls </returns>
-		public  int MixedCount
+		public int MixedCount
 		{
 			get
 			{
@@ -1176,161 +1154,6 @@ namespace Bio.VCF
 			}
 		}
 
-		// ---------------------------------------------------------------------------------------------------------
-		//
-		// validation: extra-strict validation routines for paranoid users
-		//
-		// ---------------------------------------------------------------------------------------------------------
-
-		/// <summary>
-		/// Run all extra-strict validation tests on a Variant Context object
-		/// </summary>
-		/// <param name="reportedReference">   the reported reference allele </param>
-		/// <param name="observedReference">   the actual reference allele </param>
-		/// <param name="rsIDs">               the true dbSNP IDs </param>
-		public  void extraStrictValidation(Allele reportedReference, Allele observedReference, ISet<string> rsIDs)
-		{
-			// validate the reference
-			validateReferenceBases(reportedReference, observedReference);
-
-			// validate the RS IDs
-			validateRSIDs(rsIDs);
-
-			// validate the altenate alleles
-			validateAlternateAlleles();
-
-			// validate the AN and AC fields
-			validateChromosomeCounts();
-
-			// TODO: implement me
-			//checkReferenceTrack();
-		}
-
-		public  void validateReferenceBases(Allele reportedReference, Allele observedReference)
-		{
-			if (reportedReference != null && !reportedReference.basesMatch(observedReference))
-			{
-				throw new Exception(string.Format("the REF allele is incorrect for the record at position {0}:{1:D}, fasta says {2} vs. VCF says {3}", Chr, Start, observedReference.BaseString, reportedReference.BaseString));
-			}
-		}
-
-		public  void validateRSIDs(ISet<string> rsIDs)
-		{
-			if (rsIDs != null && hasID())
-			{
-				foreach (string id in ID.Split(VCFConstants.ID_FIELD_SEPARATOR_AS_ARRAY, StringSplitOptions.RemoveEmptyEntries))
-				{
-					if (id.StartsWith("rs") && !rsIDs.Contains(id))
-					{
-						throw new Exception(string.Format("the rsID {0} for the record at position {1}:{2:D} is not in dbSNP", id, Chr, Start));
-					}
-				}
-			}
-		}
-
-		public  void validateAlternateAlleles()
-		{
-			if (!hasGenotypes())
-			{
-				return;
-			}
-			IList<Allele> reportedAlleles = Alleles;
-			ISet<Allele> observedAlleles = new HashSet<Allele>();
-			observedAlleles.Add(Reference);
-			foreach (Genotype g in Genotypes)
-			{
-				if (g.Called)
-				{
-                    foreach(Allele a in g.Alleles)                    
-                    {observedAlleles.Add(a);}
-				}
-			}
-			if (observedAlleles.Contains(Allele.NO_CALL))
-			{
-				observedAlleles.Remove(Allele.NO_CALL);
-			}
-
-			if (reportedAlleles.Count != observedAlleles.Count)
-			{
-				throw new Exception(string.Format("one or more of the ALT allele(s) for the record at position {0}:{1:D} are not observed at all in the sample genotypes", Chr, Start));
-			}
-
-			int originalSize = reportedAlleles.Count;
-			// take the intersection and see if things change
-			observedAlleles.IntersectWith(reportedAlleles);
-			if (observedAlleles.Count != originalSize)
-			{
-				throw new Exception(string.Format("one or more of the ALT allele(s) for the record at position {0}:{1:D} are not observed at all in the sample genotypes", Chr, Start));
-			}
-		}
-
-		public  void validateChromosomeCounts()
-		{
-			if (!hasGenotypes())
-			{
-				return;
-			}
-
-			// AN
-			if (hasAttribute(VCFConstants.ALLELE_NUMBER_KEY))
-			{
-				int reportedAN = Convert.ToInt32(getAttribute(VCFConstants.ALLELE_NUMBER_KEY).ToString());
-				int observedAN = CalledChrCount;
-				if (reportedAN != observedAN)
-				{
-					throw new Exception(string.Format("the Allele Number (AN) tag is incorrect for the record at position {0}:{1:D}, {2:D} vs. {3:D}", Chr, Start, reportedAN, observedAN));
-				}
-			}
-
-			// AC
-			if (hasAttribute(VCFConstants.ALLELE_COUNT_KEY))
-			{
-				List<int?> observedACs = new List<int?>();
-
-				// if there are alternate alleles, record the relevant tags
-				if (AlternateAlleles.Count > 0)
-				{
-					foreach (Allele allele in AlternateAlleles)
-					{
-						observedACs.Add(getCalledChrCount(allele));
-					}
-				}
-				else // otherwise, set them to 0
-				{
-					observedACs.Add(0);
-				}
-
-				if (getAttribute(VCFConstants.ALLELE_COUNT_KEY) is IList)
-				{
-					observedACs.Sort();
-					IList reportedACs = (IList)getAttribute(VCFConstants.ALLELE_COUNT_KEY);
-                    //reportedACs.Sort();
-					if (observedACs.Count != reportedACs.Count)
-					{
-						throw new Exception(string.Format("the Allele Count (AC) tag doesn't have the correct number of values for the record at position {0}:{1:D}, {2:D} vs. {3:D}", Chr, Start, reportedACs.Count, observedACs.Count));
-					}
-					for (int i = 0; i < observedACs.Count; i++)
-					{
-						if (Convert.ToInt32(reportedACs[i].ToString()) != observedACs[i])
-						{
-							throw new Exception(string.Format("the Allele Count (AC) tag is incorrect for the record at position {0}:{1:D}, {2} vs. {3:D}", Chr, Start, reportedACs[i], observedACs[i]));
-						}
-					}
-				}
-				else
-				{
-					if (observedACs.Count != 1)
-					{
-						throw new Exception(string.Format("the Allele Count (AC) tag doesn't have enough values for the record at position {0}:{1:D}", Chr, Start));
-					}
-					int reportedAC = Convert.ToInt32(getAttribute(VCFConstants.ALLELE_COUNT_KEY).ToString());
-					if (reportedAC != observedACs[0])
-					{
-						throw new Exception(string.Format("the Allele Count (AC) tag is incorrect for the record at position {0}:{1:D}, {2:D} vs. {3:D}", Chr, Start, reportedAC, observedACs[0]));
-					}
-				}
-			}
-		}
 
 		// ---------------------------------------------------------------------------------------------------------
 		//
@@ -1351,9 +1174,9 @@ namespace Bio.VCF
 		/// </summary>
 		private void validateStop()
 		{
-			if (hasAttribute(VCFConstants.END_KEY))
+			if (HasAttribute(VCFConstants.END_KEY))
 			{
-                int end = getAttributeAsInt(VCFConstants.END_KEY, -1);
+                int end = GetAttributeAsInt(VCFConstants.END_KEY, -1);
 				Debug.Assert(end != -1);
 				if (end != End)
 				{
@@ -1371,7 +1194,7 @@ namespace Bio.VCF
 			else
 			{
 				long length = (stop - start) + 1;
-				if (!hasSymbolicAlleles() && length != Reference.Length)
+				if (!HasSymbolicAlleles() && length != Reference.Length)
 				{
 					throw new Exception("BUG: GenomeLoc " + contig + ":" + start + "-" + stop + " has a size == " + length + " but the variation reference allele has length " + Reference.Length + " this = " + this);
 				}
@@ -1421,7 +1244,7 @@ namespace Bio.VCF
 				{
 					foreach (Allele gAllele in g.Alleles)
 					{
-						if (!hasAllele(gAllele) && gAllele.Called)
+						if (!HasAllele(gAllele) && gAllele.Called)
 						{
 							throw new Exception("Allele in genotype " + gAllele + " not in the variant context " + alleles);
 						}
@@ -1430,112 +1253,15 @@ namespace Bio.VCF
 			}
 		}
 
-		// ---------------------------------------------------------------------------------------------------------
-		//
-		// utility routines
-		//
-		// ---------------------------------------------------------------------------------------------------------
-
-		private void determineType()
-		{
-			if (type == null)
-			{
-				switch (NAlleles)
-				{
-					case 0:
-						throw new Exception("Unexpected error: requested type of VariantContext with no alleles!" + this);
-					case 1:
-						// note that this doesn't require a reference allele.  You can be monomorphic independent of having a
-						// reference allele
-						type = VariantType.NO_VARIATION;
-						break;
-					default:
-						determinePolymorphicType();
-					break;
-				}
-			}
-		}
-
-		private void determinePolymorphicType()
-		{
-			type = null;
-
-			// do a pairwise comparison of all alleles against the reference allele
-			foreach (Allele allele in alleles)
-			{
-				if (allele == REF)
-				{
-					continue;
-				}
-
-				// find the type of this allele relative to the reference
-				VariantType biallelicType = typeOfBiallelicVariant(REF, allele);
-
-				// for the first alternate allele, set the type to be that one
-				if (type == null)
-				{
-					type = biallelicType;
-				}
-				// if the type of this allele is different from that of a previous one, assign it the MIXED type and quit
-				else if (biallelicType != type)
-				{
-					type = VariantType.MIXED;
-					return;
-				}
-			}
-		}
-
-		private static VariantType typeOfBiallelicVariant(Allele reference, Allele allele)
-		{
-			if (reference.Symbolic)
-			{
-				throw new Exception("Unexpected error: encountered a record with a symbolic reference allele");
-			}
-
-			if (allele.Symbolic)
-			{
-				return VariantType.SYMBOLIC;
-			}
-
-			if (reference.Length == allele.Length)
-			{
-				if (allele.Length == 1)
-				{
-					return VariantType.SNP;
-				}
-				else
-				{
-					return VariantType.MNP;
-				}
-			}
-
-			// Important note: previously we were checking that one allele is the prefix of the other.  However, that's not an
-			// appropriate check as can be seen from the following example:
-			// REF = CTTA and ALT = C,CT,CA
-			// This should be assigned the INDEL type but was being marked as a MIXED type because of the prefix check.
-			// In truth, it should be absolutely impossible to return a MIXED type from this method because it simply
-			// performs a pairwise comparison of a single alternate allele against the reference allele (whereas the MIXED type
-			// is reserved for cases of multiple alternate alleles of different types).  Therefore, if we've reached this point
-			// in the code (so we're not a SNP, MNP, or symbolic allele), we absolutely must be an INDEL.
-
-			return VariantType.INDEL;
-
-			// old incorrect logic:
-			// if (oneIsPrefixOfOther(ref, allele))
-			//     return Type.INDEL;
-			// else
-			//     return Type.MIXED;
-		}
-
 		public override string ToString()
 		{
-			return string.Format("[VC {0} @ {1} Q{2} of type={3} alleles={4} attr={5} GT={6}", Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), hasLog10PError() ? string.Format("{0:F2}", PhredScaledQual) : ".", this.type, ParsingUtils.sortList(this.Alleles), ParsingUtils.sortedString(this.Attributes), this.Genotypes);
+			return string.Format("[VC {0} @ {1} Q{2} of type={3} alleles={4} attr={5} GT={6}", Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), HasLog10PError ? string.Format("{0:F2}", PhredScaledQual) : ".", this.type, ParsingUtils.sortList(this.Alleles), ParsingUtils.sortedString(this.Attributes), this.Genotypes);
 		}
 
-		public  string toStringWithoutGenotypes()
+		public string ToStringWithoutGenotypes()
 		{
 			return string.Format("[VC {0} @ {1} Q{2} of type={3} alleles={4} attr={5}", 
-                Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), hasLog10PError() ? string.Format("{0:F2}", PhredScaledQual) : ".", 
+                Source, contig + ":" + (start - stop == 0 ? start.ToString() : start.ToString() + "-" + stop.ToString()), HasLog10PError ? string.Format("{0:F2}", PhredScaledQual) : ".", 
                 this.type, ParsingUtils.sortList(this.Alleles), ParsingUtils.sortedString(this.Attributes));
 		}
 
@@ -1597,7 +1323,7 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="header"> containing types about all fields in this VC </param>
 		/// <returns> a fully decoded version of this VC </returns>
-		public  VariantContext fullyDecode(VCFHeader header, bool lenientDecoding)
+		public  VariantContext FullyDecode(VCFHeader header, bool lenientDecoding)
 		{
 			if (FullyDecoded)
 			{
@@ -1619,10 +1345,7 @@ namespace Bio.VCF
 		/// <returns> true if this is a fully decoded VC </returns>
 		public  bool FullyDecoded
 		{
-			get
-			{
-				return fullyDecoded;
-			}
+			get; private set;
 		}
 
 		private void fullyDecodeInfo(VariantContextBuilder builder, VCFHeader header, bool lenientDecoding)
@@ -1755,43 +1478,14 @@ namespace Bio.VCF
 			IDictionary<string, object> map = fullyDecodeAttributes(g.ExtendedAttributes, header, true);
             var g2=new GenotypeBuilder(g);
             g2.AddAttributes(map);
-            return g2.make();
+            return g2.Make();
 		}
 
-		// ---------------------------------------------------------------------------------------------------------
-		//
-		// tribble integration routines -- not for public consumption
-		//
-		// ---------------------------------------------------------------------------------------------------------
-		public  string Chr
-		{
-			get
-			{
-				return contig;
-			}
-		}
-
-		public  int Start
-		{
-			get
-			{
-				return (int)start;
-			}
-		}
-
-		public  int End
-		{
-			get
-			{
-				return (int)stop;
-			}
-		}
-
-		public  bool hasSymbolicAlleles()
+		public  bool HasSymbolicAlleles()
 		{            
-			return hasSymbolicAlleles(Alleles);
+			return HasSymbolicAlleles(Alleles);
 		}
-		public static bool hasSymbolicAlleles(IList<Allele> alleles)
+		public static bool HasSymbolicAlleles(IList<Allele> alleles)
 		{
             return alleles.Any(x => x.Symbolic);
 		}
@@ -1803,9 +1497,9 @@ namespace Bio.VCF
 				// optimization: for bi-allelic sites, just return the 1only alt allele
 				if (Biallelic)
 				{
-					return getAlternateAllele(0);
+					return GetAlternateAllele(0);
 				}
-                return AlternateAlleles.MaxBy(a=>getCalledChrCount(a));
+                return AlternateAlleles.MaxBy(a=>GetCalledChrCount(a));
             }
 		}
 
@@ -1814,7 +1508,7 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="allele"> the allele whose index we want to get </param>
 		/// <returns> the index of the allele into getAlleles(), or -1 if it cannot be found </returns>
-		public  int getAlleleIndex(Allele allele)
+		public  int GetAlleleIndex(Allele allele)
 		{
 			return Alleles.IndexOf(allele);
 		}
@@ -1824,14 +1518,14 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="alleles"> the alleles we want to look up </param>
 		/// <returns> a list of indices for each allele, in order </returns>
-		public  IList<int> getAlleleIndices(ICollection<Allele> alleles)
+		public  IList<int> GetAlleleIndices(ICollection<Allele> alleles)
 		{
-            return alleles.Select(x => getAlleleIndex(x)).ToList();
+            return alleles.Select(x => GetAlleleIndex(x)).ToList();
 		}
 
-		public  int[] getGLIndecesOfAlternateAllele(Allele targetAllele)
+		public  int[] GetGLIndecesOfAlternateAllele(Allele targetAllele)
 		{
-			int index = getAlleleIndex(targetAllele);
+			int index = GetAlleleIndex(targetAllele);
 			if (index == -1)
 			{
 				throw new System.ArgumentException("Allele " + targetAllele + " not in this VariantContex " + this);

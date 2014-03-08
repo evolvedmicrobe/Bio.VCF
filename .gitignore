@@ -9,3 +9,4 @@ bin/*
 *.psess
 *.pfx
 !library/*
+*.vsp

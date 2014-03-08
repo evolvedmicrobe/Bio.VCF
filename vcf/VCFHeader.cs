@@ -249,7 +249,7 @@ namespace Bio.VCF
 
             if (hasFormatLine(VCFConstants.GENOTYPE_LIKELIHOODS_KEY) && !hasFormatLine(VCFConstants.GENOTYPE_PL_KEY))
             {
-				Console.WriteLine ("Warning picard now wants PL fields, not just GL fields");
+				Console.WriteLine ("Warning now we want PL fields, not just GL fields");
                 //throw new VCFParsingError("Found " + VCFConstants.GENOTYPE_LIKELIHOODS_KEY + " format, but no " + VCFConstants.GENOTYPE_PL_KEY + " field.  We now only manage PL fields internally.");
             }
         }

@@ -25,8 +25,7 @@ namespace Bio.VCF
         private AbstractVCFCodec codec;
         internal readonly IList<Allele> alleles;
         internal readonly string contig;
-        internal readonly int start;
-	
+        internal readonly int start;	
     
 		/// <summary>
 		/// nUnparsedGenotypes the number of genotypes contained in the unparsedGenotypes data
@@ -37,9 +36,7 @@ namespace Bio.VCF
 		/// <summary>
 		/// True if we've already decoded the values in unparsedGenotypeData
 		/// </summary>
-		internal bool loaded = false;
-
-			
+		internal bool ParsedAlready = false;			
 
 		/// <summary>
 		/// Returns the data used in the full GenotypesContext constructor
@@ -89,7 +86,7 @@ namespace Bio.VCF
 		{
 			get
 			{
-				decode();
+				Decode();
 				return notToBeDirectlyAccessedGenotypes;
 			}
 		}
@@ -97,26 +94,52 @@ namespace Bio.VCF
 		/// <summary>
 		/// Force us to decode the genotypes, if not already done
 		/// </summary>
-		public virtual void decode()
+		public void Decode()
 		{
-			if (!loaded)
+			if (!ParsedAlready)
 			{
 				LazyData parsed = parse(UnparsedGenotypeData);
 				notToBeDirectlyAccessedGenotypes = parsed.genotypes;
 				sampleNamesInOrder = parsed.sampleNamesInOrder;
 				sampleNameToOffset = parsed.sampleNameToOffset;
-				loaded = true;
+				ParsedAlready = true;
 				UnparsedGenotypeData = null; // don't hold the unparsed data any longer
                 // warning -- this path allows us to create a VariantContext that doesn't run validateGenotypes()
 				// That said, it's not such an important routine -- it's just checking that the genotypes
 				// are well formed w.r.t. the alleles list, but this will be enforced within the VCFCodec
 			}
 		}
+        internal int FastNoCallCount
+        {
+            get
+            {
+                if (ParsedAlready)
+                {
+
+                    throw new VCFParsingError("Should not call fast method on loaded genotype");
+                }
+                else
+                {
+                    var sp = UnparsedGenotypeData.Split('\t');
+                    int count = 0;
+                    for (int i = 0; i < sp.Length; i++)
+                    {
+                        var ac = sp[i];
+                        if (ac == "./." || ac==".")
+                        {
+                            count++;
+                        }
+                    }
+                    return count;
+
+                }
+            }
+        }    
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         public LazyGenotypesContext.LazyData parse(string data)
         {
-            return codec.createGenotypeMap(data, alleles, contig, start);
+            return codec.CreateGenotypeMap(data, alleles, contig, start);
         }
 		/// <summary>
 		/// Overrides the ensure* functionality.  If the data hasn't been loaded
@@ -126,9 +149,9 @@ namespace Bio.VCF
 		[MethodImpl(MethodImplOptions.Synchronized)]
 		protected internal override void ensureSampleNameMap()
 		{
-			if (!loaded)
+			if (!ParsedAlready)
 			{
-				decode(); // will load up all of the necessary data
+				Decode(); // will load up all of the necessary data
 			}
 			else
 			{
@@ -139,9 +162,9 @@ namespace Bio.VCF
 		[MethodImpl(MethodImplOptions.Synchronized)]
 		protected internal override void ensureSampleOrdering()
 		{
-			if (!loaded)
+			if (!ParsedAlready)
 			{
-				decode(); // will load up all of the necessary data
+				Decode(); // will load up all of the necessary data
 			}
 			else
 			{
@@ -153,9 +176,9 @@ namespace Bio.VCF
 		protected internal override void invalidateSampleNameMap()
 		{
 			// if the cache is invalidated, and we haven't loaded our data yet, do so
-			if (!loaded)
+			if (!ParsedAlready)
 			{
-				decode();
+				Decode();
 			}
 			base.invalidateSampleNameMap();
 		}
@@ -164,14 +187,13 @@ namespace Bio.VCF
 		protected internal override void invalidateSampleOrdering()
 		{
 			// if the cache is invalidated, and we haven't loaded our data yet, do so
-			if (!loaded)
+			if (!ParsedAlready)
 			{
-				decode();
+				Decode();
 			}
 			base.invalidateSampleOrdering();
 		}
-
-
+        
 		public override bool Empty
 		{
 			get
@@ -180,7 +202,7 @@ namespace Bio.VCF
                 {
                     // optimization -- we know the number of samples in the unparsed data, so use it here to
                     // avoid parsing just to know if the genotypes context is empty
-                    return loaded ? base.Count == 0 : nUnparsedGenotypes == 0;
+                    return ParsedAlready ? base.Count == 0 : nUnparsedGenotypes == 0;
                 }
 			}
 		}
@@ -191,7 +213,7 @@ namespace Bio.VCF
             {
                 // optimization -- we know the number of samples in the unparsed data, so use it here to
                 // avoid parsing just to know the size of the context
-                return loaded ? base.Count : nUnparsedGenotypes;
+                return ParsedAlready ? base.Count : nUnparsedGenotypes;
             }
 		}
 

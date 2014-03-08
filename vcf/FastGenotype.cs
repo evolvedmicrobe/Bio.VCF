@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System.Collections.ObjectModel;
 /*
 * Copyright (c) 2012 The Broad Institute
 * 
@@ -68,12 +68,10 @@ namespace Bio.VCF
 	/// generic (and slow) implementation from the original VariantContext + Genotype
 	/// codebase.
 	/// 
-	/// @author Mark DePristo
-	/// @since 05/12
 	/// </summary>
 	public sealed class FastGenotype : Genotype
 	{
-		private readonly IList<Allele> alleles;
+		private readonly ReadOnlyCollection<Allele> alleles;
 		private readonly bool isPhased;
 		private readonly int GQ_Renamed;
 		private readonly int DP_Renamed;
@@ -92,9 +90,9 @@ namespace Bio.VCF
 		/// <param name="AD"> </param>
 		/// <param name="PL"> </param>
 		/// <param name="extendedAttributes"> </param>
-		protected internal FastGenotype(string sampleName, IList<Allele> alleles, bool isPhased, int GQ, int DP, int[] AD, int[] PL, string filters, Dictionary<string, object> extendedAttributes) : base(sampleName, filters)
+		protected internal FastGenotype(string sampleName, List<Allele> alleles, bool isPhased, int GQ, int DP, int[] AD, int[] PL, string filters, Dictionary<string, object> extendedAttributes) : base(sampleName, filters)
 		{
-			this.alleles = alleles;
+			this.alleles = alleles.AsReadOnly();
 			this.isPhased = isPhased;
 			this.GQ_Renamed = GQ;
 			this.DP_Renamed = DP;
@@ -102,6 +100,29 @@ namespace Bio.VCF
 			this.PL_Renamed = PL;
 			this.extendedAttributes = extendedAttributes;
 		}
+        /// <summary>
+        /// The only way to make one of these, for use by GenotypeBuilder only
+        /// </summary>
+        /// <param name="sampleName"> </param>
+        /// <param name="alleles"> </param>
+        /// <param name="isPhased"> </param>
+        /// <param name="GQ"> </param>
+        /// <param name="DP"> </param>
+        /// <param name="AD"> </param>
+        /// <param name="PL"> </param>
+        /// <param name="extendedAttributes"> </param>
+        protected internal FastGenotype(string sampleName, ReadOnlyCollection<Allele> alleles, bool isPhased, int GQ, int DP, int[] AD, int[] PL, string filters, Dictionary<string, object> extendedAttributes)
+            : base(sampleName, filters)
+        {
+            this.alleles = alleles;
+            this.isPhased = isPhased;
+            this.GQ_Renamed = GQ;
+            this.DP_Renamed = DP;
+            this.AD_Renamed = AD;
+            this.PL_Renamed = PL;
+            this.extendedAttributes = extendedAttributes;
+        }
+
 
 		// ---------------------------------------------------------------------------------------------------------
 		//

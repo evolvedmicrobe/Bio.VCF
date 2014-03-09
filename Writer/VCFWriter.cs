@@ -358,7 +358,7 @@ namespace Bio.VCF
 
 				foreach (VCFHeaderLine line in header.MetaDataInSortedOrder)
 				{
-					if (VCFHeaderVersion.isFormatString(line.Key))
+					if (VCFHeaderVersion.IsFormatString(line.Key))
 					{
 						continue;
 					}

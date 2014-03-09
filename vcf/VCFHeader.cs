@@ -205,7 +205,7 @@ namespace Bio.VCF
 			IList<VCFHeaderLine> toRemove = new List<VCFHeaderLine>();
 			foreach (VCFHeaderLine line in mMetaData)
 			{
-				if (VCFHeaderVersion.isFormatString(line.Key))
+				if (VCFHeaderVersion.IsFormatString(line.Key))
 				{
 					toRemove.Add(line);
 				}

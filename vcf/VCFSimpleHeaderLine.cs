@@ -2,11 +2,7 @@ using System.Collections.Generic;
 
 namespace Bio.VCF
 {
-
-
-
 	/// <summary>
-	/// @author ebanks
 	/// A class representing a key=value entry for simple VCF header types
 	/// </summary>
 	public class VCFSimpleHeaderLine : VCFHeaderLine, IVCFIDHeaderLine

@@ -1,37 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-/*
-* Copyright (c) 2012 The Broad Institute
-* 
-* Permission is hereby granted, free of charge, to any person
-* obtaining a copy of this software and associated documentation
-* files (the "Software"), to deal in the Software without
-* restriction, including without limitation the rights to use,
-* copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following
-* conditions:
-* 
-* The above copyright notice and this permission notice shall be
-* included in all copies or substantial portions of the Software.
-* 
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-* OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-* THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 
 namespace Bio.VCF
 {
-
-	
-
-
 	/// <summary>
 	/// Immutable representation of an allele
 	/// 
@@ -98,33 +70,31 @@ namespace Bio.VCF
 	/// Note that Alleles store all bases as bytes, in **UPPER CASE**.  So 'atc' == 'ATC' from the perspective of an
 	/// Allele.
 	/// 
-	/// @author ebanks, depristo
 	/// </summary>
 	public class Allele : IComparable<Allele>
 	{
-		private static readonly sbyte[] EMPTY_ALLELE_BASES = new sbyte[0];
+		private static readonly byte[] EMPTY_ALLELE_BASES = new byte[0];
 
 		private bool isRef = false;
 		private bool isNoCall = false;
 		private bool isSymbolic = false;
 
-		private sbyte[] bases = null;
-
+		private byte[] bases = null;
+        /// <summary>
+        /// A generic static NO_CALL allele
+        /// </summary>
 		public const string NO_CALL_STRING = ".";
-		/// <summary>
-		/// A generic static NO_CALL allele for use </summary>
-
-		// no public way to create an allele
-		protected internal Allele(sbyte[] bases, bool isRef)
+		
+		protected internal Allele(byte[] bases, bool isRef)
 		{
 			// null alleles are no longer allowed
-			if (wouldBeNullAllele(bases))
+			if (WouldBeNullAllele(bases))
 			{
 				throw new System.ArgumentException("Null alleles are not supported");
 			}
 
 			// no-calls are represented as no bases
-			if (wouldBeNoCallAllele(bases))
+			if (WouldBeNoCallAllele(bases))
 			{
 				this.bases = EMPTY_ALLELE_BASES;
 				isNoCall = true;
@@ -135,7 +105,7 @@ namespace Bio.VCF
 				return;
 			}
 
-			if (wouldBeSymbolicAllele(bases))
+			if (WouldBeSymbolicAllele(bases))
 			{
 				isSymbolic = true;
 				if (isRef)
@@ -145,34 +115,35 @@ namespace Bio.VCF
 			}
 			else
 			{
-                convertSByte(bases);
+                convertbyte(bases);
 			}
 			this.isRef = isRef;
 			this.bases = bases;
-			if (!acceptableAlleleBases(bases))
+			if (!AcceptableAlleleBases(bases))
 			{
-				throw new System.ArgumentException("Unexpected base in allele bases \'" + convertSByte(bases) + "\'");
+				throw new System.ArgumentException("Unexpected base in allele bases \'" + convertbyte(bases) + "\'");
 			}
 		}
-        string convertSByte(sbyte[] bases)
+        string convertbyte(byte[] bases)
         {
             string str = new String(bases.Select(x=>(char)x).ToArray());
             return str;
         }
-        void sByteToUpper(sbyte[] bases)
+        void byteToUpper(byte[] bases)
         {
+            int offSet = -32;//(sbyte)('A' - 'a');
             for (int i = 0; i < bases.Length; i++)
             {
                 if (bases[i] >= 'a' && bases[i] <= 'z')
-                {
-                    sbyte offSet = (sbyte)('A' - 'a');
-                    bases[i] =(sbyte)(bases[i] + offSet);
+                { 
+                    //In theory could bit shift here
+                    bases[i] =(byte)(bases[i] + offSet);
                 }
             }
         }
 
         protected internal Allele(string bases, bool isRef)
-            : this(bases.Select(x=>(sbyte)x).ToArray(), isRef)
+            : this(bases.Select(x=>(byte)x).ToArray(), isRef)
 		{
 		}
 
@@ -218,7 +189,7 @@ namespace Bio.VCF
 		/// <param name="bases"> the DNA sequence of this variation, '-', of '.' </param>
 		/// <param name="isRef"> should we make this a reference allele? </param>
 		/// <exception cref="IllegalArgumentException"> if bases contains illegal characters or is otherwise malformated </exception>
-		public static Allele create(sbyte[] bases, bool isRef)
+		public static Allele Create(byte[] bases, bool isRef)
 		{
 			if (bases == null)
 			{
@@ -230,26 +201,26 @@ namespace Bio.VCF
 				// optimization to return a static constant Allele for each single base object
 				switch (bases[0])
 				{
-					case (sbyte)'.':
+					case (byte)'.':
 						if (isRef)
 						{
 							throw new System.ArgumentException("Cannot tag a NoCall allele as the reference allele");
 						}
 						return NO_CALL;
-                    case (sbyte)'A':
-                    case (sbyte)'a':
+                    case (byte)'A':
+                    case (byte)'a':
 					    return isRef ? REF_A : ALT_A;
-                    case (sbyte)'C':
-                    case (sbyte)'c':
+                    case (byte)'C':
+                    case (byte)'c':
 					    return isRef ? REF_C : ALT_C;
-                    case (sbyte)'G':
-                    case (sbyte)'g':
+                    case (byte)'G':
+                    case (byte)'g':
 					    return isRef ? REF_G : ALT_G;
-                    case (sbyte)'T':
-                    case (sbyte)'t':
+                    case (byte)'T':
+                    case (byte)'t':
 					    return isRef ? REF_T : ALT_T;
-                    case (sbyte)'N':
-                    case (sbyte)'n':
+                    case (byte)'N':
+                    case (byte)'n':
 					    return isRef ? REF_N : ALT_N;
 					default:
 						throw new System.ArgumentException("Illegal base [" + (char)bases[0] + "] seen in the allele");
@@ -261,46 +232,46 @@ namespace Bio.VCF
 			}
 		}
 
-		public static Allele create(sbyte nucleotide, bool isRef)
+		public static Allele Create(byte nucleotide, bool isRef)
 		{
-            return create(new sbyte[] { nucleotide }, isRef);
+            return Create(new byte[] { nucleotide }, isRef);
 		}
 
-        public static Allele create(sbyte nucleotide)
+        public static Allele Create(byte nucleotide)
 		{
-            return create(nucleotide, false);
+            return Create(nucleotide, false);
 		}
 
-		public static Allele extend(Allele left, sbyte[] right)
+		public static Allele Extend(Allele left, byte[] right)
 		{
 			if (left.Symbolic)
 			{
 				throw new System.ArgumentException("Cannot extend a symbolic allele");
 			}
-			sbyte[] bases = new sbyte[left.Length + right.Length];
+			byte[] bases = new byte[left.Length + right.Length];
 			Array.Copy(left.Bases, 0, bases, 0, left.Length);
 			Array.Copy(right, 0, bases, left.Length, right.Length);
 
-			return create(bases, left.Reference);
+			return Create(bases, left.Reference);
 		}
 
 		/// <param name="bases">  bases representing an allele </param>
 		/// <returns> true if the bases represent the null allele </returns>
-		public static bool wouldBeNullAllele(sbyte[] bases)
+		public static bool WouldBeNullAllele(byte[] bases)
 		{
 			return (bases.Length == 1 && bases[0] == '-') || bases.Length == 0;
 		}
 
 		/// <param name="bases">  bases representing an allele </param>
 		/// <returns> true if the bases represent the NO_CALL allele </returns>
-		public static bool wouldBeNoCallAllele(sbyte[] bases)
+		public static bool WouldBeNoCallAllele(byte[] bases)
 		{
 			return bases.Length == 1 && bases[0] == '.';
 		}
 
 		/// <param name="bases">  bases representing an allele </param>
 		/// <returns> true if the bases represent a symbolic allele </returns>
-		public static bool wouldBeSymbolicAllele(sbyte[] bases)
+		public static bool WouldBeSymbolicAllele(byte[] bases)
 		{
 			if (bases.Length <= 2)
 			{
@@ -308,57 +279,57 @@ namespace Bio.VCF
 			}
 			else
 			{
-                return (bases[0] == '<' && bases[bases.Length - 1] == '>') || (bases.Contains((sbyte)'[') || bases.Contains((sbyte)']'));
+                return (bases[0] == '<' && bases[bases.Length - 1] == '>') || (bases.Contains((byte)'[') || bases.Contains((byte)']'));
 			}
 		}
 
 		/// <param name="bases">  bases representing an allele </param>
 		/// <returns> true if the bases represent the well formatted allele </returns>
-		public static bool acceptableAlleleBases(string bases)
+		public static bool AcceptableAlleleBases(string bases)
 		{
             
-			return acceptableAlleleBases(VCFUtils.StringToSBytes(bases), true);
+			return AcceptableAlleleBases(VCFUtils.StringToBytes(bases), true);
 		}
 
-		public static bool acceptableAlleleBases(string bases, bool allowNsAsAcceptable)
+		public static bool AcceptableAlleleBases(string bases, bool allowNsAsAcceptable)
 		{
-			return acceptableAlleleBases(VCFUtils.StringToSBytes(bases), allowNsAsAcceptable);
+			return AcceptableAlleleBases(VCFUtils.StringToBytes(bases), allowNsAsAcceptable);
 		}
 
 		/// <param name="bases">  bases representing an allele </param>
 		/// <returns> true if the bases represent the well formatted allele </returns>
-		public static bool acceptableAlleleBases(sbyte[] bases)
+		public static bool AcceptableAlleleBases(byte[] bases)
 		{
-			return acceptableAlleleBases(bases, true); // default: N bases are acceptable
+			return AcceptableAlleleBases(bases, true); // default: N bases are acceptable
 		}
 
-		public static bool acceptableAlleleBases(sbyte[] bases, bool allowNsAsAcceptable)
+		public static bool AcceptableAlleleBases(byte[] bases, bool allowNsAsAcceptable)
 		{
-			if (wouldBeNullAllele(bases))
+			if (WouldBeNullAllele(bases))
 			{
 				return false;
 			}
 
-			if (wouldBeNoCallAllele(bases) || wouldBeSymbolicAllele(bases))
+			if (WouldBeNoCallAllele(bases) || WouldBeSymbolicAllele(bases))
 			{
 				return true;
 			}
 
-			foreach (sbyte bp in bases)
+			foreach (byte bp in bases)
 			{
 				switch (bp)
 				{
-					case (sbyte)'A':
-                    case (sbyte)'C':
-                    case (sbyte)'G':
-                    case (sbyte)'T':
-                    case (sbyte)'a':
-                    case (sbyte)'c':
-                    case (sbyte)'g':
-                    case (sbyte)'t':
+					case (byte)'A':
+                    case (byte)'C':
+                    case (byte)'G':
+                    case (byte)'T':
+                    case (byte)'a':
+                    case (byte)'c':
+                    case (byte)'g':
+                    case (byte)'t':
 						    break;
-                    case (sbyte)'N':
-                    case (sbyte)'n':
+                    case (byte)'N':
+                    case (byte)'n':
 						if (allowNsAsAcceptable)
 						{
 							break;
@@ -379,26 +350,26 @@ namespace Bio.VCF
 		/// </seealso>
 		/// <param name="bases">  bases representing an allele </param>
 		/// <param name="isRef">  is this the reference allele? </param>
-		public static Allele create(string bases, bool isRef)
+		public static Allele Create(string bases, bool isRef)
 		{
-			return create(VCFUtils.StringToSBytes(bases), isRef);
+			return Create(VCFUtils.StringToBytes(bases), isRef);
 		}
 
 
 		/// Creates a non-Ref allele.  <seealso cref= Allele(byte[], boolean) for full information
 		/// </seealso>
 		/// <param name="bases">  bases representing an allele </param>
-		public static Allele create(string bases)
+		public static Allele Create(string bases)
 		{
-			return create(bases, false);
+			return Create(bases, false);
 		}
 
 		/// Creates a non-Ref allele.  <seealso cref= Allele(byte[], boolean) for full information
 		/// </seealso>
 		/// <param name="bases">  bases representing an allele </param>
-		public static Allele create(sbyte[] bases)
+		public static Allele Create(byte[] bases)
 		{
-			return create(bases, false);
+			return Create(bases, false);
 		}
 
 		/// <summary>
@@ -409,7 +380,7 @@ namespace Bio.VCF
 		/// </summary>
 		/// <param name="allele">  the allele from which to copy the bases </param>
 		/// <param name="ignoreRefState">  should we ignore the reference state of the input allele and use the default ref state? </param>
-		public static Allele create(Allele allele, bool ignoreRefState)
+		public static Allele Create(Allele allele, bool ignoreRefState)
 		{
 			return new Allele(allele, ignoreRefState);
 		}
@@ -474,7 +445,7 @@ namespace Bio.VCF
 		/// so the Null allele is represented by a vector of length 0
 		/// </summary>
 		/// <returns> the segregating bases </returns>
-		public sbyte[] Bases
+		public byte[] Bases
 		{
 			get
 			{
@@ -515,7 +486,7 @@ namespace Bio.VCF
 		/// Slightly faster then getDisplayString()
 		/// </summary>
 		/// <returns> the allele string representation </returns>
-		public sbyte[] DisplayBases
+		public byte[] DisplayBases
 		{
 			get
 			{
@@ -557,7 +528,7 @@ namespace Bio.VCF
 		/// <param name="test">  bases to test against
 		/// </param>
 		/// <returns>  true if this Allele contains the same bases as test, regardless of its reference status; handles Null and NO_CALL alleles </returns>
-		public bool basesMatch(sbyte[] test)
+		public bool BasesMatch(byte[] test)
 		{
 			return !isSymbolic && (bases == test || bases.SequenceEqual(test));
 		}
@@ -565,17 +536,17 @@ namespace Bio.VCF
 		/// <param name="test">  bases to test against
 		/// </param>
 		/// <returns>  true if this Allele contains the same bases as test, regardless of its reference status; handles Null and NO_CALL alleles </returns>
-		public bool basesMatch(string test)
+		public bool BasesMatch(string test)
 		{
-			return basesMatch(VCFUtils.StringToSBytes(test.ToUpper()));
+			return BasesMatch(VCFUtils.StringToBytes(test.ToUpper()));
 		}
 
 		/// <param name="test">  allele to test against
 		/// </param>
 		/// <returns>  true if this Allele contains the same bases as test, regardless of its reference status; handles Null and NO_CALL alleles </returns>
-		public bool basesMatch(Allele test)
+		public bool BasesMatch(Allele test)
 		{
-			return basesMatch(test.Bases);
+			return BasesMatch(test.Bases);
 		}
 
 		/// <returns> the length of this allele.  Null and NO_CALL alleles have 0 length. </returns>
@@ -593,17 +564,17 @@ namespace Bio.VCF
 		//
 		// ---------------------------------------------------------------------------------------------------------
 
-		public static Allele getMatchingAllele(ICollection<Allele> allAlleles, sbyte[] alleleBases)
+		public static Allele GetMatchingAllele(ICollection<Allele> allAlleles, byte[] alleleBases)
 		{
 			foreach (Allele a in allAlleles)
 			{
-				if (a.basesMatch(alleleBases))
+				if (a.BasesMatch(alleleBases))
 				{
 					return a;
 				}
 			}
 
-			if (wouldBeNoCallAllele(alleleBases))
+			if (WouldBeNoCallAllele(alleleBases))
 			{
 				return NO_CALL;
 			}
@@ -629,19 +600,19 @@ namespace Bio.VCF
 			}
 		}
 
-		public static bool oneIsPrefixOfOther(Allele a1, Allele a2)
+		public static bool OneIsPrefixOfOther(Allele a1, Allele a2)
 		{
 			if (a2.Length >= a1.Length)
 			{
-				return firstIsPrefixOfSecond(a1, a2);
+				return FirstIsPrefixOfSecond(a1, a2);
 			}
 			else
 			{
-				return firstIsPrefixOfSecond(a2, a1);
+				return FirstIsPrefixOfSecond(a2, a1);
 			}
 		}
 
-		private static bool firstIsPrefixOfSecond(Allele a1, Allele a2)
+		private static bool FirstIsPrefixOfSecond(Allele a1, Allele a2)
 		{
 			string a1String = a1.BaseString;
 			return a2.BaseString.Substring(0, a1String.Length).Equals(a1String);

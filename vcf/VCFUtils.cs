@@ -15,10 +15,7 @@ namespace Bio.VCF
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
-        public static sbyte[] StringToSBytes(string str)
-        {
-            return StringToBytes(str).Select(x=>(sbyte)x).ToArray();
-        }
+       
         public static byte[] StringToBytes(string str)
         {
             //Think this should be the same as UTF8 for most cases

@@ -80,7 +80,6 @@
     <Compile Include="VCF\NewCollections\ReadOnlyHashSet.cs" />
     <Compile Include="VCF\VariantContext.cs" />
     <Compile Include="VCF\VariantContextBuilder.cs" />
-    <Compile Include="VCF\VariantContextIterator.cs" />
     <Compile Include="VCF\VariantContextStatics.cs" />
     <Compile Include="VCF\VariantContextUtils.cs" />
     <Compile Include="VCF\VCF3Codec.cs" />

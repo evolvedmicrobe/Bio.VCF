@@ -93,12 +93,12 @@ namespace Bio.VCF
                     if (line.StartsWith(VCFHeader.METADATA_INDICATOR))
                     {
                         string[] lineFields = line.Substring(2).Split('=');
-                        if (lineFields.Length == 2 && VCFHeaderVersion.isFormatString(lineFields[0]))
+                        if (lineFields.Length == 2 && VCFHeaderVersion.IsFormatString(lineFields[0]))
                         {
-                            if (!VCFHeaderVersion.isVersionString(lineFields[1]))
+                            if (!VCFHeaderVersion.IsVersionString(lineFields[1]))
                             {throw new VCFParsingError("Header: " + lineFields[1] + " is not a supported version");}
                             foundHeaderVersion = true;
-                            version = VCFHeaderVersion.toHeaderVersion(lineFields[1]);
+                            version = VCFHeaderVersion.ToHeaderVersion(lineFields[1]);
                             if(!this.AcceptableVersions.Contains(version))
                             {throw new VCFParsingError("This codec is strictly for "+Name+"; please use a different codec for " + lineFields[1]);}                            
                         }
@@ -557,7 +557,7 @@ namespace Bio.VCF
 			IList<Allele> alleles = new List<Allele>(2); // we are almost always biallelic
 			// ref
 			checkAllele(reference, true, lineNo);
-			Allele refAllele = Allele.create(reference, true);
+			Allele refAllele = Allele.Create(reference, true);
 			alleles.Add(refAllele);
 
 			if (alts.IndexOf(",") == -1) // only 1 alternatives, don't call string split
@@ -605,7 +605,7 @@ namespace Bio.VCF
 					generateException("Insertions/Deletions are not supported when reading 3.x VCF's. Please" + " convert your file to VCF4 using VCFTools, available at http://vcftools.sourceforge.net/index.html", lineNo);
 				}
 
-				if (!Allele.acceptableAlleleBases(allele))
+				if (!Allele.AcceptableAlleleBases(allele))
 				{
 					generateException("Unparsable vcf record with allele " + allele, lineNo);
 				}
@@ -634,7 +634,7 @@ namespace Bio.VCF
 		{
 			checkAllele(alt, false, lineNo);
 
-			Allele allele = Allele.create(alt, false);
+			Allele allele = Allele.Create(alt, false);
 			if (!allele.NoCall)
 			{
 				alleles.Add(allele);

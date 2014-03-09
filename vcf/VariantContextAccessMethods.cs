@@ -95,7 +95,7 @@ namespace Bio.VCF
 
         public void validateReferenceBases(Allele reportedReference, Allele observedReference)
         {
-            if (reportedReference != null && !reportedReference.basesMatch(observedReference))
+            if (reportedReference != null && !reportedReference.BasesMatch(observedReference))
             {
                 throw new Exception(string.Format("the REF allele is incorrect for the record at position {0}:{1:D}, fasta says {2} vs. VCF says {3}", Chr, Start, observedReference.BaseString, reportedReference.BaseString));
             }

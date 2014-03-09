@@ -4,11 +4,8 @@ namespace Bio.VCF
 
 
 	/// <summary>
-	/// @author ebanks
-	///         <p/>
-	///         Class VCFInfoHeaderLine
-	///         <p/>
-	///         A class representing a key=value entry for INFO fields in the VCF header
+	///Class VCFInfoHeaderLine
+	///A class representing a key=value entry for INFO fields in the VCF header
 	/// </summary>
 	public class VCFInfoHeaderLine : VCFCompoundHeaderLine
 	{

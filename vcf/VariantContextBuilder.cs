@@ -165,7 +165,7 @@ namespace Bio.VCF
 			IList<Allele> alleles = new List<Allele>(alleleStrings.Count);
             for (int i = 0; i < alleleStrings.Count; i++)
 			{
-				alleles.Add(Allele.create(alleleStrings[i], i == 0));
+				alleles.Add(Allele.Create(alleleStrings[i], i == 0));
 			}
             SetAlleles(alleles);
      	}

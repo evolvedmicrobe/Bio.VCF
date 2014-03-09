@@ -59,7 +59,7 @@ namespace Bio.VCF
 		/// get the header version </summary>
 		/// <param name="version"> the version string </param>
 		/// <returns> a VCFHeaderVersion object </returns>
-		public static VCFHeaderVersion toHeaderVersion(String version)
+		public static VCFHeaderVersion ToHeaderVersion(String version)
 		{
 			version = clean(version);
 			var versions=from x in PossibleVersions where version==x.VersionString select x;
@@ -70,27 +70,27 @@ namespace Bio.VCF
 		/// are we a valid version string of some type </summary>
 		/// <param name="version"> the version string </param>
 		/// <returns> true if we're valid of some type, false otherwise </returns>
-        public static bool isVersionString(String version)
+        public static bool IsVersionString(String version)
         {
-            return toHeaderVersion(version) != null;
+            return ToHeaderVersion(version) != null;
         }
 
 		/// <summary>
 		/// are we a valid format string for some type </summary>
 		/// <param name="format"> the format string </param>
 		/// <returns> true if we're valid of some type, false otherwise </returns>
-		public static bool isFormatString(String format)
+		public static bool IsFormatString(String format)
 		{
 			format = clean(format);
             return PossibleVersions.Count(x=>x.FormatString==format)>0;
 		}
-		public static VCFHeaderVersion getHeaderVersion(String versionLine)
+		public static VCFHeaderVersion GetHeaderVersion(String versionLine)
         {
             versionLine = clean(versionLine);
             String[] lineFields = versionLine.Split('=');
-            if (lineFields.Length != 2 || !isFormatString(lineFields[0].Substring(2)))
+            if (lineFields.Length != 2 || !IsFormatString(lineFields[0].Substring(2)))
                 throw new VCFParsingError(versionLine + " is not a valid VCF version line");
-            VCFHeaderVersion vcfHV = toHeaderVersion(lineFields[1]);
+            VCFHeaderVersion vcfHV = ToHeaderVersion(lineFields[1]);
             if (vcfHV==null)
                 throw new VCFParsingError(lineFields[1] + " is not a supported version");
             return vcfHV;

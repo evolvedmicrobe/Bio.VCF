@@ -632,25 +632,15 @@ namespace Bio.VCF
 		{
             get
             {
-<<<<<<< HEAD
                 return CommonInfo.filtersWereApplied();
-=======
-                return commonInfo.filtersWereApplied();
->>>>>>> d1d02ba77a6e81801ddc16086eff6aa20c4059a5
             }
 		}
 		public  bool HasLog10PError
 		{
-<<<<<<< HEAD
             get
             {
                 return CommonInfo.hasLog10PError();
             }
-=======
-            get{
-			return commonInfo.hasLog10PError();
-                }
->>>>>>> d1d02ba77a6e81801ddc16086eff6aa20c4059a5
 		}
 		public double Log10PError
 		{
@@ -758,13 +748,13 @@ namespace Bio.VCF
 		/// <returns> The allele sharing the same bases as this String.  A convenience method; better to use byte[] </returns>
 		public  Allele GetAllele(string allele)
 		{
-			return GetAllele(VCFUtils.StringToSBytes(allele));
+			return GetAllele(VCFUtils.StringToBytes(allele));
 		}
 
 		/// <returns> The allele sharing the same bases as this byte[], or null if no such allele is present. </returns>
-		public  Allele GetAllele(sbyte[] allele)
+		public  Allele GetAllele(byte[] allele)
 		{
-			return Allele.getMatchingAllele(Alleles, allele);
+			return Allele.GetMatchingAllele(Alleles, allele);
 		}
 
 		/// <returns> True if this context contains Allele allele, or false otherwise </returns>
@@ -1488,37 +1478,10 @@ namespace Bio.VCF
 			IDictionary<string, object> map = fullyDecodeAttributes(g.ExtendedAttributes, header, true);
             var g2=new GenotypeBuilder(g);
             g2.AddAttributes(map);
-<<<<<<< HEAD
             return g2.Make();
-=======
-            return g2.make();
 		}
 
-	    public  string Chr
-		{
-			get
-			{
-				return contig;
-			}
-		}
-
-		public  int Start
-		{
-			get
-			{
-				return (int)start;
-			}
-		}
-
-		public  int End
-		{
-			get
-			{
-				return (int)stop;
-			}
->>>>>>> d1d02ba77a6e81801ddc16086eff6aa20c4059a5
-		}
-
+	   
 		public  bool HasSymbolicAlleles()
 		{            
 			return HasSymbolicAlleles(Alleles);

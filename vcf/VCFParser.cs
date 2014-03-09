@@ -9,7 +9,7 @@ namespace Bio.VCF
 {
 	
     /// <summary>
-    /// A Class to parse VCF Files;
+    /// A Class to parse VCF Files
     /// </summary>
 	public class VCFParser :IDisposable, IEnumerable<VariantContext>, IEnumerator<VariantContext>
 	{

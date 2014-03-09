@@ -533,7 +533,7 @@ namespace Bio.VCF
 						}
 						else
 						{
-							IntGenotypeFieldAccessors.Accessor accessor = intGenotypeFieldAccessors.getAccessor(field);
+							IntGenotypeFieldAccessors.Accessor accessor = intGenotypeFieldAccessors.GetAccessor(field);
 							if (accessor != null)
 							{
 

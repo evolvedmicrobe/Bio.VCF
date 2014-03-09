@@ -175,14 +175,11 @@ namespace Bio.VCF
 			{
 				countType = VCFHeaderLineCount.INTEGER;
 				count = Convert.ToInt32(numberStr);
-
-			}
-
+            }
 			if (count < 0 && countType == VCFHeaderLineCount.INTEGER)
 			{
 				throw new VCFParsingError("Count < 0 for fixed size VCF header field " + name);
 			}
-
 			try
 			{
 				type = (VCFHeaderLineType) Enum.Parse(typeof(VCFHeaderLineType), mapping["Type"]);
@@ -203,7 +200,6 @@ namespace Bio.VCF
 			}
 
 			this.lineType = lineType;
-
 			validate();
 		}
 

@@ -22,10 +22,6 @@ namespace Bio.VCF
                 _dict.Add(kv.Key, kv.Value);
             }
         }
-
-
-
-
         public void Add(TKey key, TValue value)
         {
             throw new Exception("Tried to write to read only dictionary");

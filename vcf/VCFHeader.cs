@@ -135,7 +135,7 @@ namespace Bio.VCF
 				throw new VCFParsingError("BUG: VCF header has duplicate sample names");
 			}
             GenotypeSampleNames.AddRange(genotypeSampleNames);
-			SamplesWereAlreadySorted= ParsingUtils.isSorted(genotypeSampleNames);
+			SamplesWereAlreadySorted= ParsingUtils.IsSorted(genotypeSampleNames);
 			buildVCFReaderMaps(genotypeSampleNames);
 		}
 

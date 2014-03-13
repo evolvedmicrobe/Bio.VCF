@@ -8,9 +8,6 @@ namespace Bio.VCF
 	/// A convenient way to provide a single view on the many int and int[] field values we work with,
 	/// for writing out the values.  This class makes writing out the inline AD, GQ, PL, DP fields
 	/// easy and fast
-	/// 
-	/// @author Mark DePristo
-	/// @since 6/12
 	/// </summary>
 	internal class IntGenotypeFieldAccessors
 	{
@@ -25,10 +22,11 @@ namespace Bio.VCF
 			intGenotypeFieldEncoders[VCFConstants.GENOTYPE_QUALITY_KEY] = new IntGenotypeFieldAccessors.GQAccessor();
 		}
 
-		/// <summary>
-		/// Return an accessor for field, or null if none exists </summary>
-		/// <param name="field">
-		/// @return </param>
+	    /// <summary>
+	    /// Return an accessor for the field
+	    /// </summary>
+	    /// <param name="field"></param>
+	    /// <returns></returns>
 		public virtual Accessor GetAccessor(string field)
 		{
 			return intGenotypeFieldEncoders[field];

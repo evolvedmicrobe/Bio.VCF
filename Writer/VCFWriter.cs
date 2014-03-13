@@ -169,7 +169,7 @@ namespace Bio.VCF
                 keys.Add(VCFConstants.GENOTYPE_FILTER_KEY);
             }
 
-            IList<string> sortedList = ParsingUtils.sortList(new List<string>(keys));
+            IList<string> sortedList = ParsingUtils.SortList(new List<string>(keys));
 
             // make sure the GT is first
             if (sawGoodGT)
@@ -421,7 +421,7 @@ namespace Bio.VCF
 					}
 				}
 
-				return String.Join(";", ParsingUtils.sortList(vc.Filters.ToList()).ToArray());
+				return String.Join(";", ParsingUtils.SortList(vc.Filters.ToList()).ToArray());
 			}
 			else if (vc.FiltersWereApplied)
 			{
